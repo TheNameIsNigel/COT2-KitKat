@@ -59,6 +59,7 @@
 
 #include "nandroid.h"
 #include "settings.h"
+#include "iniparse/ini.h"
 #include "settingshandler.h"
 #include "settingshandler_lang.h"
 
@@ -175,25 +176,13 @@ void show_recovery_debugging_menu()
 			{
 				ui_print("Outputting key codes.\n");
 				ui_print("Go back to end debugging.\n");
-				struct keyStruct{
-					int code;
-					int x;
-					int y;
-				}*key;
+				int key;
 				int action;
 				do
 				{
 					key = ui_wait_key();
-					if(key->code == ABS_MT_POSITION_X)
-					{
-						action = device_handle_mouse(key, 1);
-						ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
-					}
-					else
-					{
-						action = device_handle_key(key->code, 1);
-						ui_print("Key: %x\n", key->code);
-					}
+					action = device_handle_key(key, 1);
+					ui_print("Key: %d\n", key);
 				}
 				while (action != GO_BACK);
 				break;
@@ -206,6 +195,18 @@ void show_recovery_debugging_menu()
 				break;
 		}
 	}
+}
+
+char *replace_str(char *str, char *orig, char *rep) {
+	static char buffer[4096];
+	char *p;
+	if(!(p = strstr(str, orig)))
+		return str;
+		
+	strncpy(buffer, str, p-str);
+	buffer[p-str] = '\0';
+	sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
+	return buffer;
 }
 
 void show_settings_menu() {
@@ -283,9 +284,24 @@ void show_settings_menu() {
 							is_sd_theme = 0;
                             break;
                         case 2:
+                        {
+							/*
 							currenttheme = "custom";
 							is_sd_theme = 1;
+							 */
+							static char* themeheaders[] = {  "Choose a theme",
+                                "",
+                                NULL
+							};
+							char* themefile;
+							char* theme = choose_file_menu("/sdcard/cotrecovery/theme/", NULL, themeheaders);
+							themefile = replace_str(theme, "/sdcard/cotrecovery/theme/", "");
+							themefile = replace_str(themefile, "/", "");
+							LOGI("Chosen theme: %s\n", themefile);
+							currenttheme = themefile;
+							is_sd_theme = 1;
 							break;
+						}
                     }
                     break;
                 }

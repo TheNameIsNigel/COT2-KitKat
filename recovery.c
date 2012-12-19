@@ -446,16 +446,10 @@ get_menu_selection(char** headers, char** items, int menu_only,
     int wrap_count = 0;
 
     while (chosen_item < 0 && chosen_item != GO_BACK) {
-        struct keyStruct *key;
-        key = ui_wait_key();
+        int key = ui_wait_key();
         int visible = ui_text_visible();
 
-        int action;
-        if(key->code == ABS_MT_POSITION_X) {
-			action = device_handle_mouse(key, visible);
-		} else {
-			action = device_handle_key(key->code, visible);
-		}
+        int action = device_handle_key(key, visible);
 
         int old_selected = selected;
         selected = ui_get_selected_item();
@@ -1125,12 +1119,25 @@ main(int argc, char **argv) {
         // Is the first_boot flag set?
         if (first_boot == 1) {
 			// Run the touchscreen calibration routine
-			ts_calibrate();
-			update_cot_settings();
+			//ts_calibrate();
+			//update_cot_settings();
 			// Clear the screen
 			clear_screen();
 			// Show the welcome text
 			show_welcome_text();
+		}
+		
+		DIR *dp;
+		struct dirent *ep;
+		
+		dp = opendir ("/sdcard/cotrecovery/theme/");
+		if (dp != NULL) {
+			while (ep = readdir (dp)) {
+				printf("%s\n", ep->d_name);
+			}
+			(void) closedir (dp);
+		} else {
+			printf("Couldn't open directory!\n");
 		}
 
         if (check_for_script_file()) run_script_file();
