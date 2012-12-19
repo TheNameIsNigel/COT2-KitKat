@@ -106,7 +106,6 @@ static gr_surface *gInstallationOverlay;
 static gr_surface *gProgressBarIndeterminate;
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
-static gr_surface gProgressBarFill;
 static gr_surface gVirtualKeys; // surface for virtual keys
 static gr_surface gBackground;
 static int ui_has_initialized = 0;
