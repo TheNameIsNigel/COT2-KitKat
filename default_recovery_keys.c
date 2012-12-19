@@ -4,6 +4,8 @@
 #include "common.h"
 #include "extendedcommands.h"
 
+#define KEY_BACK 158
+
 
 int device_toggle_display(volatile char* key_pressed, int key_code) {
     int alt = key_pressed[KEY_LEFTALT] || key_pressed[KEY_RIGHTALT];
@@ -20,6 +22,7 @@ int device_toggle_display(volatile char* key_pressed, int key_code) {
 int device_handle_key(int key_code, int visible) {
     if (visible) {
         switch (key_code) {
+			//ui_print("Got keycode: %d\n", key_code);
             case KEY_CAPSLOCK:
             case KEY_DOWN:
             case KEY_VOLUMEDOWN:
@@ -30,7 +33,7 @@ int device_handle_key(int key_code, int visible) {
             case KEY_UP:
             case KEY_VOLUMEUP:
             case KEY_HOME:
-                return SELECT_ITEM;
+                return HIGHLIGHT_UP;
 
             case KEY_LEFTBRACE:
             case KEY_ENTER:
@@ -50,10 +53,12 @@ int device_handle_key(int key_code, int visible) {
                 if (!get_allow_toggle_display() && !ui_root_menu) {
                     return GO_BACK;
                 }
+            
             case KEY_BACK:
-                if (!ui_root_menu) {
-                    return GO_BACK;
-                }
+			{
+				//ui_print("Got KEY_BACK action!\n");
+                return GO_BACK;
+			}
         }
     }
 

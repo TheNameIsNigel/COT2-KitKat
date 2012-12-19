@@ -63,8 +63,6 @@
 #include "settingshandler.h"
 #include "settingshandler_lang.h"
 
-#define ABS_MT_POSITION_X 0x35  /* Center X ellipse position */
-
 int UICOLOR0 = 0;
 int UICOLOR1 = 0;
 int UICOLOR2 = 0;
@@ -222,9 +220,8 @@ void show_settings_menu() {
     #define SETTINGS_ITEM_ORS_WIPE      4
     #define SETTINGS_ITEM_NAND_PROMPT   5
     #define SETTINGS_ITEM_SIGCHECK      6
-    #define SETTINGS_ITEM_TS_CAL		7
 
-    static char* list[9];
+    static char* list[8];
 	
     list[0] = "Language";
     list[1] = "Theme";
@@ -253,8 +250,7 @@ void show_settings_menu() {
 	} else {
 		list[6] = "Enable md5 signature check";
 	}
-    list[7] = "Calibrate Touchscreen";
-    list[8] = NULL;
+    list[7] = NULL;
 
     for (;;) {
         int chosen_item = get_menu_selection(headers, list, 0, 0);
@@ -405,100 +401,11 @@ void show_settings_menu() {
 
                 break;
             }
-            case SETTINGS_ITEM_TS_CAL:
-            {
-				ts_calibrate();
-				break;
-			}
             default:
                 return;
         }
         update_cot_settings();
     }
-}
-
-void ts_calibrate() {
-	ui_set_background(BACKGROUND_ICON_TSCAL);
-	ui_print("Beginning touchscreen calibration.\n");
-	ui_print("Tap the red dot. 3 taps remaining.\n");
-	struct keyStruct{
-		int code;
-		int x;
-		int y;
-	}*key;
-	int step = 1;
-	int prev_touch_y, prev_max_x, prev_max_y;
-	int sum_x, sum_y;
-	int final_x, final_y;
-	int ts_x_1, ts_x_2, ts_x_3;
-	int ts_y_1, ts_y_2, ts_y_3;
-	prev_touch_y = touchY;
-	prev_max_x = maxX;
-	prev_max_y = maxY;
-	maxX = 0;
-	maxY = 0;
-	touchY = 0;
-	do {
-		key = ui_wait_key();
-		switch(step) {
-			case 1:
-			{
-				if(key->code == ABS_MT_POSITION_X) {
-					ts_x_1 = key->x;
-					ts_y_1 = key->y;
-					step = 2;
-					ui_print("Tap the red dot. 2 taps remaining.\n");
-					break;
-				}
-			}
-			case 2:
-			{
-				if(key->code == ABS_MT_POSITION_X) {
-					ts_x_2 = key->x;
-					ts_y_2 = key->y;
-					step = 3;
-					ui_print("Tap the red dot. 1 tap remaining.\n");
-					break;
-				}
-			}
-			case 3:
-			{
-				if(key->code == ABS_MT_POSITION_X) {
-					ts_x_3 = key->x;
-					ts_y_3 = key->y;
-					step = 4;
-					ui_print("Now calculating calibration data...\n");
-					break;
-				}
-			}
-			default:
-			{
-				break;
-			}
-		}
-	} while (step != 4);
-	sum_x = ts_x_1+ts_x_2+ts_x_3;
-	sum_y = ts_y_1+ts_y_2+ts_y_3;
-	final_x = sum_x/3;
-	final_y = sum_y/3;
-	final_x = final_x*2;
-	final_y = final_y*2;
-	maxX = final_x;
-	maxY = final_y;
-#ifndef BOARD_TS_NO_BOUNDARY
-	int y_calc;
-	int fb_height;
-	int fb_limit;
-	fb_height = gr_fb_height();
-	y_calc = fb_height/6;
-	fb_limit = fb_height-y_calc;
-	touchY = fb_limit;
-#else
-	touchY = 0;
-#endif
-	ui_print("Calibration complete!\n");
-	ui_set_background(BACKGROUND_ICON_CLOCKWORK);
-	return;
 }
 
 void clear_screen() {

@@ -99,20 +99,10 @@ extern char* MENU_ITEMS[];
 #define CENTER_ALIGN		1
 #define RIGHT_ALIGN			2
 
-extern int TOUCH_CONTROL_DEBUG;
-
-extern int TOUCH_NOSHOW_LOG;
-
-extern int maxX;
-extern int maxY;
-extern int touchY;
-
 extern int BATT_LINE;
 extern int TIME_LINE;
 extern int BATT_POS;
 extern int BATT_LINE;
-
-int get_menu_icon_info(int indx1, int indx2);
 
 // Loosely track the depth of the current menu
 extern int ui_root_menu;

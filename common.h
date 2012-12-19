@@ -175,4 +175,6 @@ extern int minimum_storage;
 
 extern int OTHER_SD_CARD;
 
+extern int board_touch_button_height;
+
 #endif  // RECOVERY_COMMON_H
