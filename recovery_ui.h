@@ -121,4 +121,8 @@ extern int ui_handle_key(int key, int visible);
 extern const char *DEFAULT_BACKUP_PATH;
 extern const char *USER_DEFINED_BACKUP_MARKER;
 
+void calc_touch_height();
+
+//extern int board_touch_button_height;
+
 #endif

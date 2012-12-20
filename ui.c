@@ -100,13 +100,15 @@ UIParameters ui_parameters = {
     13, 190, // installation icon overlay offset
 };
 
+int board_touch_button_height = 0;
+
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
 static gr_surface *gInstallationOverlay;
 static gr_surface *gProgressBarIndeterminate;
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
-static gr_surface gVirtualKeys; // surface for virtual keys
+static gr_surface gVirtualKeys;
 static gr_surface gBackground;
 static int ui_has_initialized = 0;
 static int ui_log_stdout = 1;
@@ -122,7 +124,7 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
     { &gProgressBarEmpty,               "progress_empty" },
     { &gProgressBarFill,                "progress_fill" },
-    { &gVirtualKeys,					"virtual_keys" },
+    { &gVirtualKeys,                "virtual_keys" },
     { NULL,                             NULL },
 };
 
@@ -253,11 +255,61 @@ static void draw_virtualkeys_locked() {
 	gr_surface surface = gVirtualKeys;
 	int iconWidth = gr_get_width(surface);
 	int iconHeight = gr_get_height(surface);
+	board_touch_button_height = iconHeight;
 	// align left, full width on 720p displays, but moves over on
 	// tablets with > 720 pixels
 	int iconX = 0;
 	int iconY = (gr_fb_height() - iconHeight);
 	gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
+	
+/*
+	for whatever reason this code works, but is buggy in the drawing;
+	I couldn't figure out why, and I no longer wish to try, it's all
+	yours good luck; it's never actually be tested on another device,
+	but I don't see any reason why it wouldn't scale correctly. if
+	you want help designing new keys and their coords, I'd be happy
+	to help with that, otherwise count me out =)
+	
+	-- CEnnis91
+
+	// coords are based from a center point
+    int vkeys[3][3][2] =    {{{0, -1}, {-1, 1}, {1, 1}},	// UP ^
+                            {{1, -1}, {-1, -1}, {0, 1}},	// DOWN v
+                            {{-1, -1}, {1, 0}, {-1, 1}}};	// ENTER >
+                            
+	int keys = 3;													// number of virtual keys
+	int hspace = (gr_fb_width() / keys);							// x distance between keys
+	int lwidth = 3;													// line width
+	int size = (gr_fb_width() / 12)/2;								// size of virtual keys relative to width
+	int x_offset = (hspace/2);										// x-coord for center of key
+	int y_offset = gr_fb_height() - size*2;							// y-coord for center of key
+    
+    // TODO: Vertical drawing support
+    int x, y, z;
+    for(x=0;x<keys;x++){
+        for(y=0;y<keys;y++) {
+            for(z=0;z<2;z++) {
+                vkeys[x][y][z] = vkeys[x][y][z]*size;				// expand to fit screen
+
+				// forget why this is here, but it breaks when removed =)
+                if (z == 0) {
+                    vkeys[x][y][z] = vkeys[x][y][z]+x_offset;
+                }
+                
+                if (z == 1) {
+                    vkeys[x][y][z] = vkeys[x][y][z]+y_offset;
+                }
+            }
+        }
+        
+		x_offset = x_offset + hspace;								// increment to position next key
+		gr_poly(vkeys[x], lwidth, keys, 0);
+    }
+    
+    int line_offset = gr_fb_height() - size*4;						// x-coord to draw the line
+    int line[2][2] = {{0, line_offset}, {gr_fb_width(), line_offset}};
+    gr_poly(line, 2, 2, 1);
+    */
 }
 
 static void draw_text_line(int row, const char* t, int align) {
@@ -557,13 +609,13 @@ static int input_callback(int fd, short revents, void *data)
         }
     } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_X) {
         old_x = touch_x;
-    float touch_x_rel = (float)ev.value / (float)max_x_touch;
-    printf("rel: %f\n", touch_x_rel);        
-    touch_x = touch_x_rel * gr_fb_width();
-    printf("Touch X is: %i\n", touch_x);
+		float touch_x_rel = (float)ev.value / (float)max_x_touch;
+		printf("rel: %f\n", touch_x_rel);        
+		touch_x = touch_x_rel * gr_fb_width();
+		printf("Touch X is: %i\n", touch_x);
         if(old_x != 0) diff_x += touch_x - old_x;
  
-    printf("X diff is: %i\n", diff_x);
+		printf("X diff is: %i\n", diff_x);
      
         //if(touch_y < gr_fb_height() - board_touch_button_height) {
             if(diff_x > 130) {
@@ -586,12 +638,12 @@ static int input_callback(int fd, short revents, void *data)
     } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_Y) {
         old_y = touch_y;
         float touch_y_rel = (float)ev.value / (float)max_y_touch;
-    printf("rel: %f\n", touch_y_rel);        
-    touch_y = touch_y_rel * gr_fb_height();
-    printf("Touch Y is: %i\n", touch_y);
-    printf("Old Y is: %i\n", old_y);
+		printf("rel: %f\n", touch_y_rel);        
+		touch_y = touch_y_rel * gr_fb_height();
+		printf("Touch Y is: %i\n", touch_y);
+		printf("Old Y is: %i\n", old_y);
         if(old_y != 0) diff_y += touch_y - old_y;
-    printf("Diff is: %i\n", diff_y);
+		printf("Diff is: %i\n", diff_y);
                  
         //if(touch_y < gr_fb_height() - 196) {
             if(diff_y > 80) {

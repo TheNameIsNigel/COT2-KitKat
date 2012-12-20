@@ -246,6 +246,48 @@ void gr_fill(int x, int y, int w, int h)
     gl->recti(gl, x, y, w, h);
 }
 
+/* gr_poly(int coords[][2], int w, int sides, int open)
+**
+** int coords:		array containing the coordinates
+** int w:			line width
+** int sides:		number of sides drawn
+** int open:		if 1, the polygon is closed
+**
+** return:			N/A
+**
+** -- CEnnis91
+*/
+void gr_poly(int coords[][2], int w, int sides, int open)
+{
+    int x,y;
+    GGLContext *gl = gr_context;
+    GGLcoord width[0];
+    int bound = 0;
+    
+    for(x=0;x<sides;x++){
+        for(y=0;y<2;y++) {
+            // allow coords exactly the width/height of the screen to be drawn
+            if (y == 0)
+                bound = (coords[x][y] == gr_fb_width()) ? 1 : 0;
+                
+            if (y == 1)
+                bound = (coords[x][y] == gr_fb_height()) ? 1 : 0;
+                
+            coords[x][y] = (coords[x][y]*(PIXEL_SIZE*4))-(bound);
+        }
+    }
+
+    width[0] = w*(PIXEL_SIZE*4);
+    
+    for(x=0;x<sides-1;x++) {
+        gl->linex(gl, coords[x], coords[x+1], width[0]);
+    }
+    
+    if(open == 0){
+        gl->linex(gl, coords[x], coords[0], width[0]);
+    }
+}
+
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
     if (gr_context == NULL) {
         return;
