@@ -1052,7 +1052,12 @@ main(int argc, char **argv) {
         if (strstr(argv[0], "setprop"))
             return setprop_main(argc, argv);
         if (strstr(argv[0], "getprop"))
-			return getprop_main(argc, argv);
+            return getprop_main(argc, argv);
+        if (strstr(argv[0], "setup_adbd")) {
+            load_volume_table();
+            setup_adbd();
+            return 0;
+        }
         return busybox_driver(argc, argv);
     }
     __system("/sbin/postrecoveryboot.sh");
@@ -1220,8 +1225,6 @@ main(int argc, char **argv) {
             LOGI("Skipping execution of extendedcommand, file not found...\n");
         }
     }
-    
-    setup_adbd();
 
     if (status != INSTALL_SUCCESS && !is_user_initiated_recovery) {
         ui_set_show_text(1);
