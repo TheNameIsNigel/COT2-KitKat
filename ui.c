@@ -1129,12 +1129,21 @@ static int usb_connected() {
     return connected;
 }
 
+<<<<<<< HEAD
 void ui_reset_icons()
 {
 	pthread_mutex_lock(&gUpdateMutex);
 	ui_init_icons();
 	update_screen_locked();
 	pthread_mutex_unlock(&gUpdateMutex);
+=======
+void ui_cancel_wait_key() {
+    pthread_mutex_lock(&key_queue_mutex);
+    key_queue[key_queue_len] = -2;
+    key_queue_len++;
+    pthread_cond_signal(&key_queue_cond);
+    pthread_mutex_unlock(&key_queue_mutex);
+>>>>>>> fba8e16... Allow cancelation of adb sideload.
 }
 
 int ui_wait_key()
