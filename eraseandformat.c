@@ -543,11 +543,13 @@ void show_partition_menu()
 
             if (!confirm_selection(confirm_string, confirm))
                 continue;
+            ignore_data_media_workaround(1);
             ui_print("Formatting %s...\n", v->mount_point);
             if (0 != format_volume(v->mount_point))
                 ui_print("Error formatting %s!\n", v->mount_point);
             else
                 ui_print("Done.\n");
+            ignore_data_media_workaround(0);
         }
     }
 

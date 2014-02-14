@@ -210,9 +210,11 @@ int ensure_path_mounted_at_mount_point(const char* path, const char* mount_point
     return -1;
 }
 
+static int ignore_data_media = 0;
+
 int ensure_path_unmounted(const char* path) {
     // if we are using /data/media, do not ever unmount volumes /data or /sdcard
-    if (strstr(path, "/data") == path && is_data_media()) {
+    if (strstr(path, "/data") == path && is_data_media() && !ignore_data_media) {
         return 0;
     }
 
@@ -262,7 +264,7 @@ int format_volume(const char* volume) {
     }
     // check to see if /data is being formatted, and if it is /data/media
     // Note: the /sdcard check is redundant probably, just being safe.
-    if (strstr(volume, "/data") == volume && is_data_media()) {
+    if (strstr(volume, "/data") == volume && is_data_media() && !ignore_data_media) {
         return format_unknown_device(NULL, volume, NULL);
     }
     if (strcmp(v->fs_type, "ramdisk") == 0) {
@@ -320,4 +322,8 @@ int format_volume(const char* volume) {
     return -1;
 #endif
     return format_unknown_device(v->blk_device, volume, v->fs_type);
+}
+
+void ignore_data_media_workaround(int ignore) {
+	ignore_data_media = ignore;
 }
