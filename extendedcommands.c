@@ -1355,17 +1355,28 @@ int verify_root_and_recovery() {
 
     int ret = 0;
     struct stat st;
-    if (0 == lstat("/system/etc/install-recovery.sh", &st)) {
-        if (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-            ui_show_text(1);
-            ret = 1;
-            if (confirm_selection("ROM may flash stock recovery on boot. Fix?", "Yes - Disable recovery flash")) {
-                __system("chmod -x /system/etc/install-recovery.sh");
+    // check to see if install-recovery.sh is going to clobber recovery
+    // install-recovery.sh is also used to run the su daemon on stock rom for 4.3+
+    // so verify that doesn't exist...
+    if (0 != lstat("/system/etc/.installed_su_daemon", &st)) {
+        // check install-recovery.sh exists and is executable
+        if (0 == lstat("/system/etc/install-recovery.sh", &st)) {
+            if (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
+                ui_show_text(1);
+                ret = 1;
+                if (confirm_selection("ROM may flash stock recovery on boot. Fix?", "Yes - Disable recovery flash")) {
+                    __system("chmod -x /system/etc/install-recovery.sh");
+                }
             }
         }
     }
 
+<<<<<<< HEAD
 	int exists = 0;
+=======
+
+    int exists = 0;
+>>>>>>> 912b6d9... su installation and detection updates for 4.3
     if (0 == lstat("/system/bin/su", &st)) {
 		exists = 1;
         if (S_ISREG(st.st_mode)) {
@@ -1393,6 +1404,7 @@ int verify_root_and_recovery() {
     }
     
     if (!exists) {
+<<<<<<< HEAD
 		ui_show_text(1);
 		ret = 1;
 		if (confirm_selection("Root access is missing. Root device?", "Yes - Root device (/system/xbin/su)")) {
@@ -1401,6 +1413,14 @@ int verify_root_and_recovery() {
 			__system("ln -sf /system/xbin/su /system/bin/su");
 		}
 	}
+=======
+        ui_show_text(1);
+        ret = 1;
+        if (confirm_selection("Root access is missing. Root device?", "Yes - Root device (/system/xbin/su)")) {
+            __system("/sbin/install-su.sh");
+        }
+    }
+>>>>>>> 912b6d9... su installation and detection updates for 4.3
 
     ensure_path_unmounted("/system");
     return ret;
