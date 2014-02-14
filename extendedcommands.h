@@ -56,6 +56,8 @@ int show_lowspace_menu(int i, const char* backup_path);
 
 int verify_root_and_recovery();
 
+char* choose_file_menu(const char* directory, const char* fileExtensionOrDirectory, const char* headers[]);
+
 #ifdef RECOVERY_EXTEND_NANDROID_MENU
 void extend_nandroid_menu(char** items, int item_count, int max_items);
 void handle_nandroid_menu(int item_count, int selected);

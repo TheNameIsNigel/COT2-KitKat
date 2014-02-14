@@ -41,6 +41,9 @@
 #include "roots.h"
 #include "recovery_ui.h"
 
+#include "adb_install.h"
+#include "minadbd/adb.h"
+
 #include "extendedcommands.h"
 #include "flashutils/flashutils.h"
 #include "eraseandformat.h"
@@ -278,6 +281,7 @@ copy_log_file(const char* destination, int append) {
     }
 }
 
+
 // clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read), and
 // record any intent we were asked to communicate back to the system.
@@ -442,16 +446,10 @@ get_menu_selection(char** headers, char** items, int menu_only,
     int wrap_count = 0;
 
     while (chosen_item < 0 && chosen_item != GO_BACK) {
-        struct keyStruct *key;
-        key = ui_wait_key();
+        int key = ui_wait_key();
         int visible = ui_text_visible();
 
-        int action;
-        if(key->code == ABS_MT_POSITION_X) {
-			action = device_handle_mouse(key, visible);
-		} else {
-			action = device_handle_key(key->code, visible);
-		}
+        int action = device_handle_key(key, visible);
 
         int old_selected = selected;
         selected = ui_get_selected_item();
@@ -803,6 +801,7 @@ int run_script_file(void) {
 						ret_val = 1;
 					}
 				}
+				
 			} else if (strcmp(command, "wipe") == 0) {
 				// Wipe -- ToDo: Make this use the same wipe functionality as normal wipes
 				if (strcmp(value, "cache") == 0 || strcmp(value, "/cache") == 0) {
@@ -841,10 +840,10 @@ int run_script_file(void) {
 						remove_nl = 0;
 					strncpy(value2, tok, line_len - remove_nl);
 					ui_print("Backup folder set to '%s'\n", value2);
-					nandroid_get_backup_path(backup_path);
+					nandroid_get_backup_path(backup_path, OTHER_SD_CARD);
 					strcat(backup_path, value2);
 				} else {
-					nandroid_generate_timestamp_path(backup_path);
+					nandroid_generate_timestamp_path(backup_path, OTHER_SD_CARD);
 				}
 				//ui_print("Backup options are ignored in CWMR: '%s'\n", value1);
 				nandroid_backup(backup_path);
@@ -965,6 +964,12 @@ int run_script_file(void) {
 
 int
 main(int argc, char **argv) {
+
+    if (argc == 2 && strcmp(argv[1], "adbd") == 0) {
+        adb_main();
+        return 0;
+    }
+
     // Recovery needs to install world-readable files, so clear umask
     // set by init
     umask(0);
@@ -1022,6 +1027,7 @@ main(int argc, char **argv) {
     device_ui_init(&ui_parameters);
     load_volume_table();
     process_volumes();
+    parse_settings();
     ui_init();
 
     LOGI("Processing arguments.\n");
@@ -1109,10 +1115,32 @@ main(int argc, char **argv) {
         } else if (volume_for_path("/external_sd") != NULL) {
             OTHER_SD_CARD = EXTERNALSD;
         }
+		parse_settings();
+        // Is the first_boot flag set?
+        if (first_boot == 1) {
+			// Run the touchscreen calibration routine
+			//ts_calibrate();
+			//update_cot_settings();
+			// Clear the screen
+			clear_screen();
+			// Show the welcome text
+			show_welcome_text();
+		}
+		
+		DIR *dp;
+		struct dirent *ep;
+		
+		dp = opendir ("/sdcard/cotrecovery/theme/");
+		if (dp != NULL) {
+			while (ep = readdir (dp)) {
+				printf("%s\n", ep->d_name);
+			}
+			(void) closedir (dp);
+		} else {
+			printf("Couldn't open directory!\n");
+		}
 
-		    parse_settings();
-        
-		    if (check_for_script_file()) run_script_file();
+        if (check_for_script_file()) run_script_file();
         if (extendedcommand_file_exists()) {
             LOGI("Running extendedcommand...\n");
             int ret;
@@ -1130,7 +1158,7 @@ main(int argc, char **argv) {
 
     if (status != INSTALL_SUCCESS && !is_user_initiated_recovery) {
         ui_set_show_text(1);
-        ui_dyn_background();
+        ui_set_background(BACKGROUND_ICON_CLOCKWORK);
     }
     if (status != INSTALL_SUCCESS || ui_text_visible()) {
         prompt_and_wait();
