@@ -426,12 +426,10 @@ int nandroid_backup(const char* backup_path)
         volume = volume_for_path("/data");
         
     int ret;
-    struct statfs sfs;
-    struct stat s;
+    struct statfs s;
     if (NULL != volume) {
-        if (0 != (ret = statfs(volume->mount_point, &sfs)))
+        if (0 != (ret = statfs(volume->mount_point, &s)))
             return print_and_error("Unable to stat backup path.\n");
-<<<<<<< HEAD
             
 		uint64_t sdcard_free_mb = recalc_sdcard_space(backup_path);
 		ui_print("SD Card space free: %lluMB\n", sdcard_free_mb);
@@ -442,16 +440,6 @@ int nandroid_backup(const char* backup_path)
 		}
 	}
 	ui_set_background(BACKGROUND_ICON_INSTALLING);
-=======
-        uint64_t bavail = sfs.f_bavail;
-        uint64_t bsize = sfs.f_bsize;
-        uint64_t sdcard_free = bavail * bsize;
-        uint64_t sdcard_free_mb = sdcard_free / (uint64_t)(1024 * 1024);
-        ui_print("SD Card space free: %lluMB\n", sdcard_free_mb);
-        if (sdcard_free_mb < 150)
-            ui_print("There may not be enough free space to complete backup... continuing...\n");
-    }
->>>>>>> a1d5819... Fix usage of stat vs statfs
     char tmp[PATH_MAX];
     ensure_directory(backup_path);
 
@@ -754,19 +742,19 @@ int nandroid_restore_partition_extended(const char* backup_path, const char* mou
         int i = 0;
         while ((filesystem = filesystems[i]) != NULL) {
             sprintf(tmp, "%s/%s.%s.img", backup_path, name, filesystem);
-            if (0 == (ret = stat(tmp, &file_info))) {
+            if (0 == (ret = statfs(tmp, &file_info))) {
                 backup_filesystem = filesystem;
                 restore_handler = unyaffs_wrapper;
                 break;
             }
             sprintf(tmp, "%s/%s.%s.tar", backup_path, name, filesystem);
-            if (0 == (ret = stat(tmp, &file_info))) {
+            if (0 == (ret = statfs(tmp, &file_info))) {
                 backup_filesystem = filesystem;
                 restore_handler = tar_extract_wrapper;
                 break;
             }
             sprintf(tmp, "%s/%s.%s.dup", backup_path, name, filesystem);
-            if (0 == (ret = stat(tmp, &file_info))) {
+            if (0 == (ret = statfs(tmp, &file_info))) {
                 backup_filesystem = filesystem;
                 restore_handler = dedupe_extract_wrapper;
                 break;
