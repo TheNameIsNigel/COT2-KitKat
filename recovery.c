@@ -563,13 +563,6 @@ get_menu_selection(const char** headers, char** items, int menu_only,
 	key = ui_wait_key();
         int visible = ui_text_visible();
 
-        else if (key == -2) {   // we are returning from ui_cancel_wait_key(): trigger a GO_BACK
-	  return GO_BACK;
-        }
-        else if (key == -3) {   // an USB device was plugged in (returning from ui_wait_key())
-            return REFRESH;
-        }
-
         int action;
 	if (key->code == ABS_MT_POSITION_X) {
 	  action = device_handle_mouse(key, visible);
