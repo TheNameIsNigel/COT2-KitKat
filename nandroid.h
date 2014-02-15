@@ -11,7 +11,7 @@ void nandroid_dedupe_gc(const char* blob_dir);
 void nandroid_force_backup_format(const char* fmt);
 unsigned nandroid_get_default_backup_format();
 void ensure_directory(const char* dir);
-void nandroid_generate_timestamp_path(const char* backup_path);
+void nandroid_generate_timestamp_path(char* backup_path);
 
 #define NANDROID_BACKUP_FORMAT_TAR 0
 #define NANDROID_BACKUP_FORMAT_DUP 1
