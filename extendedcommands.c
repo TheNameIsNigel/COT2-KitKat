@@ -40,6 +40,7 @@
 #include <libgen.h>
 #include "mtdutils/mtdutils.h"
 #include "bmlutils/bmlutils.h"
+#include "colorific.h"
 #include "cutils/android_reboot.h"
 
 #define ABS_MT_POSITION_X 0x35	/* Center X ellipse position */
@@ -131,6 +132,23 @@ const char* read_last_install_path() {
 void toggle_signature_check() {
   signature_check_enabled = !signature_check_enabled;
   ui_print("Signature Check: %s\n", signature_check_enabled ? "Enabled" : "Disabled");
+}
+
+void toggle_ui_debugging()
+
+{
+  switch(UI_COLOR_DEBUG) {
+    case 0: {
+      ui_print("Enabling UI color debugging; will disable again on reboot.\n");
+      UI_COLOR_DEBUG = 1;
+      break;
+    }
+    default: {
+      ui_print("Disabling UI color debugging.\n");
+      UI_COLOR_DEBUG = 0;
+      break;
+    }
+  }
 }
 
 #ifdef ENABLE_LOKI
@@ -1391,11 +1409,71 @@ int can_partition(const char* volume) {
   return 1;
 }
 
+void show_advanced_debugging_menu() {
+  static char* headers[] = { "Debugging Options",
+    "",
+    NULL
+  };
+  
+  static char* list[] = { "Report Error",
+    "Key Test",
+    "Show Log",
+    "Toggle UI Debugging",
+    NULL
+  };
+  
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, list, 0, 0);
+    if(chosen_item == GO_BACK)
+      break;
+    switch(chosen_item) {
+      case 0:
+      {
+	handle_failure(1);
+	break;
+      }
+      case 1:
+      {
+	ui_print("Outputting key codes.\n");
+	ui_print("Go back to end debugging.\n");
+	struct keyStruct{
+	  int code;
+	  int x;
+	  int y;
+	}*key;
+	int action;
+	do
+	{
+	  if(key->code == ABS_MT_POSITION_X) {
+	    action = device_handle_mouse(key, 1);
+	    ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
+	  } else {
+	    action = device_handle_key(key->code, 1);
+	    ui_print("Key: %x\n", key->code);
+	  }
+	}
+	while (action != GO_BACK);
+	break;
+      }
+      case 2:
+      {
+	ui_printlogtail(12);
+	break;
+      }
+      case 3:
+      {
+	toggle_ui_debugging();
+	break;
+      }
+    }
+  }
+}
+
 
 #ifdef ENABLE_LOKI
-#define FIXED_ADVANCED_ENTRIES 9
+#define FIXED_ADVANCED_ENTRIES 7
 #else
-#define FIXED_ADVANCED_ENTRIES 8
+#define FIXED_ADVANCED_ENTRIES 6
 #endif
 
 int show_advanced_menu() {
@@ -1424,12 +1502,10 @@ int show_advanced_menu() {
   
   list[2] = "Power Off";
   list[3] = "Wipe Dalvik Cache";
-  list[4] = "Report Error";
-  list[5] = "Key Test";
-  list[6] = "Show Log";
-  list[7] = "Set UI Color";
+  list[4] = "Set UI Color";
+  list[5] = "Debugging Options";
   #ifdef ENABLE_LOKI
-  list[8] = "Toggle Loki Support";
+  list[6] = "Toggle Loki Support";
   #endif
   
   char list_prefix[] = "Partition ";
@@ -1491,32 +1567,6 @@ int show_advanced_menu() {
 	break;
       }
       case 4:
-	handle_failure(1);
-	break;
-      case 5: {
-	ui_print("Outputting key codes.\n");
-	ui_print("Go back to end debugging.\n");
-	struct keyStruct {
-	  int code;
-	  int x;
-	  int y;
-	}*key;
-	int action;
-	do {
-	  if(key->code == ABS_MT_POSITION_X) {
-	    action = device_handle_mouse(key, 1);
-	    ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
-	  } else {
-	    action = device_handle_key(key->code, 1);
-	    ui_print("Key: %x\n", key->code);
-	  }
-	} while (action != GO_BACK);
-	break;
-      }
-      case 6:
-	ui_printlogtail(12);
-	break;
-      case 7:
       {
 	static char* ui_colors[] = {
 	  "Hydro (default)",
@@ -1539,8 +1589,13 @@ int show_advanced_menu() {
 	  break;
 	}
       }
+      case 5:
+      {
+	show_advanced_debugging_menu();
+	break;
+      }
       #ifdef ENABLE_LOKI
-      case 8:
+      case 6:
 	toggle_loki_support();
 	break;
 	#endif
