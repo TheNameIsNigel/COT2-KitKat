@@ -21,10 +21,13 @@ LOCAL_SRC_FILES := \
     firmware.c \
     edifyscripting.c \
     prop.c \
-    colorific.c \
+    settingsparser.c \
+    settings.c \
     default_recovery_ui.c \
     adb_install.c \
     verifier.c \
+    iniparser/iniparser.c \
+    iniparser/dictionary.c \
     ../../system/vold/vdc.c
 
 ADDITIONAL_RECOVERY_FILES := $(shell echo $$ADDITIONAL_RECOVERY_FILES)
