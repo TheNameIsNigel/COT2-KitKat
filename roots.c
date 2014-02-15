@@ -48,10 +48,11 @@ Volume* get_device_volumes() {
 void load_volume_table() {
     int i;
     int ret;
+
     fstab = fs_mgr_read_fstab("/etc/recovery.fstab");
     if (!fstab) {
-		LOGE("failed to read /etc/recovery.fstab\n");
-		return;
+        LOGE("failed to read /etc/recovery.fstab\n");
+        return;
     }
 
     ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk", 0);
@@ -62,12 +63,25 @@ void load_volume_table() {
         return;
     }
 
+    // Process vold-managed volumes with mount point "auto"
+    for (i = 0; i < fstab->num_entries; ++i) {
+        Volume* v = &fstab->recs[i];
+        if (fs_mgr_is_voldmanaged(v) && strcmp(v->mount_point, "auto") == 0) {
+            char mount[PATH_MAX];
+
+            // Set the mount point to /storage/label which as used by vold
+            snprintf(mount, PATH_MAX, "/storage/%s", v->label);
+            free(v->mount_point);
+            v->mount_point = strdup(mount);
+        }
+    }
+
     fprintf(stderr, "recovery filesystem table\n");
     fprintf(stderr, "=========================\n");
     for (i = 0; i < fstab->num_entries; ++i) {
-		Volume* v = &fstab->recs[i];
-		fprintf(stderr, "  %d %s %s %s %lld\n", i, v->mount_point, v->fs_type,
-			v->blk_device, v->length);
+        Volume* v = &fstab->recs[i];
+        fprintf(stderr, "  %d %s %s %s %lld\n", i, v->mount_point, v->fs_type,
+               v->blk_device, v->length);
     }
     fprintf(stderr, "\n");
 }
@@ -131,7 +145,7 @@ char** get_extra_storage_paths() {
 static char* android_secure_path = NULL;
 char* get_android_secure_path() {
     if (android_secure_path == NULL) {
-        android_secure_path = malloc((17 + strlen(get_primary_storage_path())) * sizeof(char *));
+        android_secure_path = malloc(sizeof("/.android_secure") + strlen(get_primary_storage_path()) + 1);
         sprintf(android_secure_path, "%s/.android_secure", primary_storage_path);
     }
     return android_secure_path;
@@ -160,14 +174,14 @@ int is_data_media() {
     int i;
     int has_sdcard = 0;
     for (i = 0; i < get_num_volumes(); i++) {
-		Volume* vol = get_device_volumes() + i;
+        Volume* vol = get_device_volumes() + i;
         if (strcmp(vol->fs_type, "datamedia") == 0)
             return 1;
         if (strcmp(vol->mount_point, "/sdcard") == 0)
-			has_sdcard = 1;
-		if (fs_mgr_is_voldmanaged(vol) &&
-			(strcmp(vol->mount_point, "/storage/sdcard0") == 0))
-			has_sdcard = 1;
+            has_sdcard = 1;
+        if (fs_mgr_is_voldmanaged(vol) &&
+                (strcmp(vol->mount_point, "/storage/sdcard0") == 0))
+            has_sdcard = 1;
     }
     return !has_sdcard;
 }
@@ -176,7 +190,7 @@ void setup_data_media() {
     int i;
     char* mount_point = "/sdcard";
     for (i = 0; i < get_num_volumes(); i++) {
-		Volume* vol = get_device_volumes() + i;
+        Volume* vol = get_device_volumes() + i;
         if (strcmp(vol->fs_type, "datamedia") == 0) {
             mount_point = vol->mount_point;
             break;
@@ -205,9 +219,9 @@ int ensure_path_mounted(const char* path) {
 
 int ensure_path_mounted_at_mount_point(const char* path, const char* mount_point) {
     if (is_data_media_volume_path(path)) {
-		if (ui_should_log_stdout()) {
-			LOGI("using /data/media for %s.\n", path);
-		}
+        if (ui_should_log_stdout()) {
+            LOGI("using /data/media for %s.\n", path);
+        }
         int ret;
         if (0 != (ret = ensure_path_mounted("/data")))
             return ret;
@@ -244,8 +258,9 @@ int ensure_path_mounted_at_mount_point(const char* path, const char* mount_point
     mkdir(mount_point, 0755);  // in case it doesn't already exist
 
     if (fs_mgr_is_voldmanaged(v)) {
-		return vold_mount_volume(mount_point, 1) == CommandOkay ? 0 : -1;
-	} else if (strcmp(v->fs_type, "yaffs2") == 0) {
+        return vold_mount_volume(mount_point, 1) == CommandOkay ? 0 : -1;
+
+    } else if (strcmp(v->fs_type, "yaffs2") == 0) {
         // mount an MTD partition as a YAFFS2 filesystem.
         mtd_scan_partitions();
         const MtdPartition* partition;
@@ -274,7 +289,6 @@ int ensure_path_mounted_at_mount_point(const char* path, const char* mount_point
         return __system(mount_cmd);
     }
 
-    LOGE("unknown fs_type \"%s\" for %s\n", v->fs_type, mount_point);
     return -1;
 }
 
@@ -282,6 +296,9 @@ static int ignore_data_media = 0;
 
 int ensure_path_unmounted(const char* path) {
     // if we are using /data/media, do not ever unmount volumes /data or /sdcard
+    if (is_data_media_volume_path(path)) {
+        return ensure_path_unmounted("/data");
+    }
     if (strstr(path, "/data") == path && is_data_media() && !ignore_data_media) {
         return 0;
     }
@@ -291,9 +308,7 @@ int ensure_path_unmounted(const char* path) {
         LOGE("unknown volume for path [%s]\n", path);
         return -1;
     }
-    if (is_data_media_volume_path(path)) {
-        return ensure_path_unmounted("/data");
-    }
+
     if (strcmp(v->fs_type, "ramdisk") == 0) {
         // the ramdisk is always mounted; you can't unmount it.
         return -1;
@@ -312,9 +327,9 @@ int ensure_path_unmounted(const char* path) {
         // volume is already unmounted
         return 0;
     }
-    
+
     if (fs_mgr_is_voldmanaged(volume_for_path(v->mount_point)))
-		return vold_unmount_volume(v->mount_point, 0, 1) == CommandOkay ? 0 : -1;
+        return vold_unmount_volume(v->mount_point, 0, 1) == CommandOkay ? 0 : -1;
 
     return unmount_mounted_volume(mv);
 }
@@ -322,11 +337,20 @@ int ensure_path_unmounted(const char* path) {
 extern struct selabel_handle *sehandle;
 
 int format_volume(const char* volume) {
+    if (is_data_media_volume_path(volume)) {
+        return format_unknown_device(NULL, volume, NULL);
+    }
+    // check to see if /data is being formatted, and if it is /data/media
+    // Note: the /sdcard check is redundant probably, just being safe.
+    if (strstr(volume, "/data") == volume && is_data_media() && !ignore_data_media) {
+        return format_unknown_device(NULL, volume, NULL);
+    }
+
     Volume* v = volume_for_path(volume);
     if (v == NULL) {
         // silent failure for sd-ext
         if (strcmp(volume, "/sd-ext") != 0)
-            LOGE("unknown volume \"%s\"\n", volume);
+            LOGE("unknown volume '%s'\n", volume);
         return -1;
     }
     // silent failure to format non existing sd-ext when defined in recovery.fstab
@@ -337,22 +361,16 @@ int format_volume(const char* volume) {
             return -1;
         }
     }
-    
-    if (fs_mgr_is_voldmanaged(v)) {
+
+    // Only use vold format for exact matches otherwise /sdcard will be
+    // formatted instead of /storage/sdcard0/.android_secure
+    if (fs_mgr_is_voldmanaged(v) && strcmp(volume, v->mount_point) == 0) {
         if (ensure_path_unmounted(volume) != 0) {
             LOGE("format_volume failed to unmount %s", v->mount_point);
         }
         return vold_format_volume(v->mount_point, 1) == CommandOkay ? 0 : -1;
     }
 
-    if (is_data_media_volume_path(volume)) {
-        return format_unknown_device(NULL, volume, NULL);
-    }
-    // check to see if /data is being formatted, and if it is /data/media
-    // Note: the /sdcard check is redundant probably, just being safe.
-    if (strstr(volume, "/data") == volume && is_data_media() && !ignore_data_media) {
-        return format_unknown_device(NULL, volume, NULL);
-    }
     if (strcmp(v->fs_type, "ramdisk") == 0) {
         // you can't format the ramdisk.
         LOGE("can't format_volume \"%s\"", volume);
@@ -403,6 +421,18 @@ int format_volume(const char* volume) {
         return 0;
     }
 
+#ifdef USE_F2FS
+    if (strcmp(v->fs_type, "f2fs") == 0) {
+        const char* args[] = { "mkfs.f2fs", v->blk_device };
+        int result = make_f2fs_main(2, (char**)args);
+        if (result != 0) {
+            LOGE("format_volume: mkfs.f2fs failed on %s\n", v->blk_device);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
 #if 0
     LOGE("format_volume: fs_type \"%s\" unsupported\n", v->fs_type);
     return -1;
@@ -411,7 +441,7 @@ int format_volume(const char* volume) {
 }
 
 void ignore_data_media_workaround(int ignore) {
-	ignore_data_media = ignore;
+  ignore_data_media = ignore;
 }
 
 void setup_legacy_storage_paths() {

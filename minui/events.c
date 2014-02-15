@@ -62,7 +62,7 @@ int ev_init(ev_callback input_cb, void *data)
             fd = openat(dirfd(dir), de->d_name, O_RDONLY);
             if(fd < 0) continue;
 
-			/* read the evbits of the input device */
+            /* read the evbits of the input device */
             if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) < 0) {
                 close(fd);
                 continue;
@@ -70,8 +70,6 @@ int ev_init(ev_callback input_cb, void *data)
 
             /* TODO: add ability to specify event masks. For now, just assume
              * that only EV_KEY and EV_REL event types are ever needed. */
-             
-            printf("Loading (%s): %i\n", de->d_name, ev_bits);
             if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_ABS, ev_bits)) {
                 close(fd);
                 continue;
@@ -83,7 +81,7 @@ int ev_init(ev_callback input_cb, void *data)
             ev_fdinfo[ev_count].data = data;
             ev_count++;
             ev_dev_count++;
-            if(ev_dev_count == MAX_DEVICES) break;
+            if (ev_dev_count == (MAX_DEVICES + MAX_MISC_FDS)) break;
         }
     }
 

@@ -65,45 +65,39 @@ extern int device_perform_action(int which);
 // are erased after this returns (whether it returns success or not).
 int device_wipe_data();
 
+// ui_wait_key() special return codes
+/*
+#define REBOOT              -1 // ui_wait_key() timeout to reboot
+#define CANCEL              -2 // ui_cancel_wait_key()
+*/
+#define REFRESH             -3
+
+// return actions by ui_handle_key() for get_menu_selection()
 #define NO_ACTION           -1
 
 #define HIGHLIGHT_UP        -2
 #define HIGHLIGHT_DOWN      -3
 #define SELECT_ITEM         -4
 #define GO_BACK             -5
-#define REFRESH				-6
 
+// main menu items for prompt_and_wait()
 #define ITEM_REBOOT          0
 #define ITEM_APPLY_EXT       1
 #define ITEM_APPLY_SDCARD    1  // historical synonym for ITEM_APPLY_EXT
+#define ITEM_APPLY_ZIP       1  // used for installing an update from a zip
 #define ITEM_WIPE_DATA       2
-#define ITEM_WIPE_ALL		 3
+#define ITEM_WIPE_CACHE      3
 // unused in cwr
 #define ITEM_APPLY_CACHE     4
 #define ITEM_NANDROID        4
 #define ITEM_PARTITION       5
 #define ITEM_ADVANCED        6
-#define ITEM_POWEROPTIONS        7
 
 // Header text to display above the main menu.
 extern char* MENU_HEADERS[];
 
 // Text of menu items.
 extern char* MENU_ITEMS[];
-
-#define MENU_ICON_X			0
-#define MENU_ICON_Y			1
-#define MENU_ICON_XL		2
-#define MENU_ICON_XR		3
-
-#define LEFT_ALIGN			0
-#define CENTER_ALIGN		1
-#define RIGHT_ALIGN			2
-
-extern int BATT_LINE;
-extern int TIME_LINE;
-extern int BATT_POS;
-extern int BATT_LINE;
 
 // Loosely track the depth of the current menu
 extern int ui_root_menu;
@@ -114,16 +108,9 @@ get_menu_selection(const char** headers, char** items, int menu_only, int initia
 void
 set_sdcard_update_bootloader_message();
 
-void draw_screen_locked(void);
-void update_screen_locked(void);
-
 extern int ui_handle_key(int key, int visible);
 
-extern const char *DEFAULT_BACKUP_PATH;
-extern const char *USER_DEFINED_BACKUP_MARKER;
-
-void calc_touch_height();
-
-//extern int board_touch_button_height;
+// call a clean reboot
+void reboot_main_system(int cmd, int flags, char *arg);
 
 #endif

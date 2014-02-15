@@ -99,7 +99,6 @@ void *adb_sideload_thread(void* v) {
 
 int
 apply_from_adb() {
-
     stop_adbd();
     set_usb_driver(1);
 
@@ -115,31 +114,32 @@ apply_from_adb() {
     pthread_t sideload_thread;
     pthread_create(&sideload_thread, NULL, &adb_sideload_thread, &data);
     
-    static char* headers[] = { "ADB Sideload",
-		"",
-		NULL
-	};
-	
-	static char* list[] = { "Cancel sideload", NULL };
-	
-	get_menu_selection(headers, list, 0, 0);
+    static const char* headers[] = {  "ADB Sideload",
+                                "",
+                                NULL
+    };
+
+    static char* list[] = { "Cancel sideload", NULL };
+    
+    get_menu_selection(headers, list, 0, 0);
 
     set_usb_driver(0);
     maybe_restart_adbd();
 
-	// kill the child
-	kill(data.child, SIGTERM);
-	pthread_join(sideload_thread, NULL);
-	ui_clear_key_queue();
+    // kill the child
+    kill(data.child, SIGTERM);
+    pthread_join(sideload_thread, NULL);
+    ui_clear_key_queue();
 
     struct stat st;
     if (stat(ADB_SIDELOAD_FILENAME, &st) != 0) {
-        if (errno == ENOENT)
+        if (errno == ENOENT) {
             ui_print("No package received.\n");
-        else
+            ui_set_background(BACKGROUND_ICON_ERROR);
+        } else {
             ui_print("Error reading package:\n  %s\n", strerror(errno));
-        
-        ui_set_background(BACKGROUND_ICON_ERROR);
+            ui_set_background(BACKGROUND_ICON_ERROR);
+        }
         return INSTALL_ERROR;
     }
 
@@ -150,6 +150,19 @@ apply_from_adb() {
         ui_set_background(BACKGROUND_ICON_ERROR);
         ui_print("Installation aborted.\n");
     }
+
+#ifdef ENABLE_LOKI
+    else if (loki_support_enabled) {
+        ui_print("Checking if loki-fying is needed");
+        install_status = loki_check();
+        if (install_status != INSTALL_SUCCESS)
+            ui_set_background(BACKGROUND_ICON_ERROR);
+    }
+#endif
+
+    if (install_status == INSTALL_SUCCESS)
+        ui_set_background(BACKGROUND_ICON_NONE);
+
     remove(ADB_SIDELOAD_FILENAME);
     return install_status;
 }

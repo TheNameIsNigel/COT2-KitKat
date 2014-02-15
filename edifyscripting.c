@@ -313,7 +313,7 @@ int run_script_from_buffer(char* script_data, int script_len, char* filename)
 
 int run_and_remove_extendedcommand()
 {
-	char* primary_path = get_primary_storage_path();
+    char* primary_path = get_primary_storage_path();
     char tmp[PATH_MAX];
     sprintf(tmp, "cp %s /tmp/%s", EXTENDEDCOMMAND_SCRIPT, basename(EXTENDEDCOMMAND_SCRIPT));
     __system(tmp);

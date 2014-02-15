@@ -4,8 +4,6 @@
 #include "common.h"
 #include "extendedcommands.h"
 
-#define KEY_BACK 158
-
 
 int device_toggle_display(volatile char* key_pressed, int key_code) {
     int alt = key_pressed[KEY_LEFTALT] || key_pressed[KEY_RIGHTALT];
@@ -16,13 +14,12 @@ int device_toggle_display(volatile char* key_pressed, int key_code) {
         return 0;
         //return get_allow_toggle_display() && (key_code == KEY_HOME || key_code == KEY_MENU || key_code == KEY_END);
     }
-    return get_allow_toggle_display() && (key_code == KEY_HOME || key_code == KEY_MENU || key_code == KEY_END);
+    return get_allow_toggle_display() && (key_code == KEY_HOME || key_code == KEY_MENU || key_code == KEY_POWER || key_code == KEY_END);
 }
 
 int device_handle_key(int key_code, int visible) {
     if (visible) {
         switch (key_code) {
-			//ui_print("Got keycode: %d\n", key_code);
             case KEY_CAPSLOCK:
             case KEY_DOWN:
             case KEY_VOLUMEDOWN:
@@ -35,13 +32,20 @@ int device_handle_key(int key_code, int visible) {
             case KEY_HOME:
                 return HIGHLIGHT_UP;
 
+            case KEY_POWER:
+                if (ui_get_showing_back_button()) {
+                    return SELECT_ITEM;
+                }
+                if (!get_allow_toggle_display() && !ui_root_menu) {
+                    return GO_BACK;
+                }
+                break;
             case KEY_LEFTBRACE:
             case KEY_ENTER:
             case BTN_MOUSE:
             case KEY_CAMERA:
             case KEY_F21:
             case KEY_SEND:
-            case KEY_POWER:
                 return SELECT_ITEM;
             
             case KEY_END:
@@ -53,12 +57,10 @@ int device_handle_key(int key_code, int visible) {
                 if (!get_allow_toggle_display() && !ui_root_menu) {
                     return GO_BACK;
                 }
-            
             case KEY_BACK:
-			{
-				//ui_print("Got KEY_BACK action!\n");
-                return GO_BACK;
-			}
+                if (!ui_root_menu) {
+                    return GO_BACK;
+                }
         }
     }
 

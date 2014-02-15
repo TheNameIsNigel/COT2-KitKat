@@ -36,9 +36,6 @@
 #include "firmware.h"
 
 #include "extendedcommands.h"
-#include "settings.h"
-#include "settingshandler.h"
-#include "settingshandler_lang.h"
 
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
@@ -143,6 +140,72 @@ try_update_binary(const char *path, ZipArchive *zip) {
         LOGE("Can't copy %s\n", ASSUMED_UPDATE_BINARY_NAME);
         mzCloseZipArchive(zip);
         return 1;
+    }
+
+    /* Make sure the update binary is compatible with this recovery
+     *
+     * We're building this against 4.4's (or above) bionic, which
+     * has a different property namespace structure. Old updaters
+     * don't know how to deal with it, so if we think we got one
+     * of those, force the use of a fallback compatible copy and
+     * hope for the best
+     *
+     * if "set_perm_" is found, it's probably a regular updater
+     * instead of a custom one. And if "set_metadata_" isn't there,
+     * it's pre-4.4, which makes it incompatible
+     *
+     * Also, I hate matching strings in binary blobs */
+
+    FILE *updaterfile = fopen(binary, "rb");
+    char tmpbuf;
+    char setpermmatch[9] = { 's','e','t','_','p','e','r','m','_' };
+    char setmetamatch[13] = { 's','e','t','_','m','e','t','a','d','a','t','a','_' };
+    size_t pos = 0;
+    bool foundsetperm = false;
+    bool foundsetmeta = false;
+
+    if (updaterfile == NULL) {
+        LOGE("Can't find %s for validation\n", ASSUMED_UPDATE_BINARY_NAME);
+        return 1;
+    }
+    fseek(updaterfile, 0, SEEK_SET);
+    while (!feof(updaterfile)) {
+        fread(&tmpbuf, 1, 1, updaterfile);
+        if (!foundsetperm && pos < sizeof(setpermmatch) && tmpbuf == setpermmatch[pos]) {
+            pos++;
+            if (pos == sizeof(setpermmatch)) {
+                foundsetperm = true;
+                pos = 0;
+            }
+            continue;
+        }
+        if (!foundsetmeta && tmpbuf == setmetamatch[pos]) {
+            pos++;
+            if (pos == sizeof(setmetamatch)) {
+                foundsetmeta = true;
+                pos = 0;
+            }
+            continue;
+        }
+        /* None of the match loops got a continuation, reset the counter */
+        pos = 0;
+    }
+    fclose(updaterfile);
+
+    /* Found set_perm and !set_metadata, overwrite the binary with the fallback */
+    if (foundsetperm && !foundsetmeta) {
+        FILE *fallbackupdater = fopen("/res/updater.fallback", "rb");
+        FILE *updaterfile = fopen(binary, "wb");
+        char updbuf[1024];
+
+        LOGW("Using fallback updater for downgrade...\n");
+        while (!feof(fallbackupdater)) {
+           fread(&updbuf, 1, 1024, fallbackupdater);
+           fwrite(&updbuf, 1, 1024, updaterfile);
+        }
+        chmod(binary, 0755);
+        fclose(updaterfile);
+        fclose(fallbackupdater);
     }
 
     int pipefd[2];
@@ -260,6 +323,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
         mzCloseZipArchive(zip);
         return ret;
     }
+    mzCloseZipArchive(zip);
     return INSTALL_SUCCESS;
 }
 
@@ -269,6 +333,27 @@ really_install_package(const char *path)
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_print("Finding update package...\n");
     ui_show_indeterminate_progress();
+
+    // Resolve symlink in case legacy /sdcard path is used
+    // Requires: symlink uses absolute path
+    char new_path[PATH_MAX];
+    if (strlen(path) > 1) {
+        char *rest = strchr(path + 1, '/');
+        if (rest != NULL) {
+            int readlink_length;
+            int root_length = rest - path;
+            char *root = malloc(root_length + 1);
+            strncpy(root, path, root_length);
+            root[root_length] = 0;
+            readlink_length = readlink(root, new_path, PATH_MAX);
+            if (readlink_length > 0) {
+                strncpy(new_path + readlink_length, rest, PATH_MAX - readlink_length);
+                path = new_path;
+            }
+            free(root);
+        }
+    }
+
     LOGI("Update location: %s\n", path);
 
     if (ensure_path_mounted(path) != 0) {
@@ -282,7 +367,7 @@ really_install_package(const char *path)
 
     if (signature_check_enabled) {
         int numKeys;
-        RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
+        Certificate* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
         if (loadedKeys == NULL) {
             LOGE("Failed to load keys\n");
             return INSTALL_CORRUPT;
@@ -338,6 +423,5 @@ install_package(const char* path)
         fclose(install_log);
         chmod(LAST_INSTALL_FILE, 0644);
     }
-    ui_set_background(BACKGROUND_ICON_CLOCKWORK);
     return result;
 }

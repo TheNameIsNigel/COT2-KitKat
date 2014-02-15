@@ -29,58 +29,22 @@
 #include <unistd.h>
 
 #include "common.h"
+#include <cutils/android_reboot.h>
+#include <cutils/properties.h>
 #include "minui/minui.h"
 #include "recovery_ui.h"
 #include "voldclient/voldclient.h"
 
 extern int __system(const char *command);
 
-// Include extendedcommands.h in order to get our custom ui colors
-#include "extendedcommands.h"
-
-//these are included in the original kernel's linux/input.h but are missing from AOSP
-
-#ifndef SYN_MT_REPORT
-#define SYN_REPORT 0
-#define SYN_MT_REPORT 2
-#define ABS_MT_SLOT 0x2f
-#define ABS_MT_TOUCH_MAJOR  0x30  /* Major axis of touching ellipse */
-#define ABS_MT_WIDTH_MAJOR  0x32  /* Major axis of approaching ellipse */
-#define ABS_MT_POSITION_X 0x35  /* Center X ellipse position */
-#define ABS_MT_POSITION_Y 0x36  /* Center Y ellipse position */
-#define ABS_MT_TRACKING_ID 0x39  /* Center Y ellipse position */
-#endif
-
-#include <pthread.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
-
-#include "common.h"
-#include <cutils/android_reboot.h>
-#include <cutils/properties.h>
-#include "minui/minui.h"
-#include "recovery_ui.h"
-#include "settings.h"
-#include "settingshandler.h"
-#include "iniparse/ini.h"
-
-extern int __system(const char *command);
-
+#if defined(BOARD_HAS_NO_SELECT_BUTTON) || defined(BOARD_TOUCH_RECOVERY)
 static int gShowBackButton = 1;
+#else
+static int gShowBackButton = 0;
+#endif
 
 #define MAX_COLS 96
-#ifdef BOARD_TS_MAX_ROWS
-#define MAX_ROWS BOARD_TS_MAX_ROWS
-#else
-#define MAX_ROWS 30
-#endif
+#define MAX_ROWS 32
 
 #define MENU_MAX_COLS 64
 #define MENU_MAX_ROWS 250
@@ -101,15 +65,12 @@ UIParameters ui_parameters = {
     13, 190, // installation icon overlay offset
 };
 
-int board_touch_button_height = 0;
-
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
 static gr_surface *gInstallationOverlay;
 static gr_surface *gProgressBarIndeterminate;
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
-static gr_surface gVirtualKeys;
 static gr_surface gBackground;
 static int ui_has_initialized = 0;
 static int ui_log_stdout = 1;
@@ -120,12 +81,13 @@ static int boardRepeatableKeys[64], boardNumRepeatableKeys = 0;
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
     { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-    { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_background" },
+    { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
+    { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
     { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING], "icon_firmware_install" },
     { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
     { &gProgressBarEmpty,               "progress_empty" },
     { &gProgressBarFill,                "progress_fill" },
-    { &gVirtualKeys,                "virtual_keys" },
+    { &gBackground,                "stitch" },
     { NULL,                             NULL },
 };
 
@@ -158,6 +120,9 @@ static int menu_top = 0, menu_items = 0, menu_sel = 0;
 static int menu_show_start = 0;             // this is line which menu display is starting at
 static int max_menu_rows;
 
+static int cur_rainbow_color = 0;
+static int gRainbowMode = 0;
+
 // Key event input queue
 static pthread_mutex_t key_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t key_queue_cond = PTHREAD_COND_INITIALIZER;
@@ -165,7 +130,15 @@ static int key_queue[256], key_queue_len = 0;
 static unsigned long key_last_repeat[KEY_MAX + 1], key_press_time[KEY_MAX + 1];
 static volatile char key_pressed[KEY_MAX + 1];
 
-void update_screen_locked(void);
+static void update_screen_locked(void);
+
+#ifdef BOARD_TOUCH_RECOVERY
+#include "../../vendor/koush/recovery/touch.c"
+#else
+#ifdef BOARD_RECOVERY_SWIPE
+#include "swipe.c"
+#endif
+#endif
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -194,8 +167,20 @@ static void draw_install_overlay_locked(int frame) {
 static void draw_background_locked(int icon)
 {
     gPagesIdentical = 0;
-    gr_color(0, 0, 0, 255);
-    gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+    // gr_color(0, 0, 0, 255);
+    // gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+
+    {
+        int bw = gr_get_width(gBackground);
+        int bh = gr_get_height(gBackground);
+        int bx = 0;
+        int by = 0;
+        for (by = 0; by < gr_fb_height(); by += bh) {
+            for (bx = 0; bx < gr_fb_width(); bx += bw) {
+                gr_blit(gBackground, 0, 0, bw, bh, bx, by);
+            }
+        }
+    }
 
     if (icon) {
         gr_surface surface = gBackgroundIcon[icon];
@@ -250,178 +235,93 @@ static void draw_progress_locked()
     }
 }
 
-// Draw the virtual keys on the screen.  Does not flip pages.
-// Should only be called with gUpdateMutex locked.
-static void draw_virtualkeys_locked() {
-	gr_surface surface = gVirtualKeys;
-	int iconWidth = gr_get_width(surface);
-	int iconHeight = gr_get_height(surface);
-	board_touch_button_height = iconHeight;
-	// align left, full width on 720p displays, but moves over on
-	// tablets with > 720 pixels
-	int iconX = 0;
-	int iconY = (gr_fb_height() - iconHeight);
-	gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
-	
-/*
-	for whatever reason this code works, but is buggy in the drawing;
-	I couldn't figure out why, and I no longer wish to try, it's all
-	yours good luck; it's never actually be tested on another device,
-	but I don't see any reason why it wouldn't scale correctly. if
-	you want help designing new keys and their coords, I'd be happy
-	to help with that, otherwise count me out =)
-	
-	-- CEnnis91
-
-	// coords are based from a center point
-    int vkeys[3][3][2] =    {{{0, -1}, {-1, 1}, {1, 1}},	// UP ^
-                            {{1, -1}, {-1, -1}, {0, 1}},	// DOWN v
-                            {{-1, -1}, {1, 0}, {-1, 1}}};	// ENTER >
-                            
-	int keys = 3;													// number of virtual keys
-	int hspace = (gr_fb_width() / keys);							// x distance between keys
-	int lwidth = 3;													// line width
-	int size = (gr_fb_width() / 12)/2;								// size of virtual keys relative to width
-	int x_offset = (hspace/2);										// x-coord for center of key
-	int y_offset = gr_fb_height() - size*2;							// y-coord for center of key
-    
-    // TODO: Vertical drawing support
-    int x, y, z;
-    for(x=0;x<keys;x++){
-        for(y=0;y<keys;y++) {
-            for(z=0;z<2;z++) {
-                vkeys[x][y][z] = vkeys[x][y][z]*size;				// expand to fit screen
-
-				// forget why this is here, but it breaks when removed =)
-                if (z == 0) {
-                    vkeys[x][y][z] = vkeys[x][y][z]+x_offset;
-                }
-                
-                if (z == 1) {
-                    vkeys[x][y][z] = vkeys[x][y][z]+y_offset;
-                }
-            }
-        }
-        
-		x_offset = x_offset + hspace;								// increment to position next key
-		gr_poly(vkeys[x], lwidth, keys, 0);
-    }
-    
-    int line_offset = gr_fb_height() - size*4;						// x-coord to draw the line
-    int line[2][2] = {{0, line_offset}, {gr_fb_width(), line_offset}};
-    gr_poly(line, 2, 2, 1);
-    */
+static void draw_text_line(int row, const char* t) {
+  if (t[0] != '\0') {
+    if (ui_get_rainbow_mode()) ui_rainbow_mode();
+    gr_text(0, (row+1)*CHAR_HEIGHT-1, t, 0);
+  }
 }
 
-static void draw_text_line(int row, const char* t, int align) {
-	int col = 0; 
-	if (t[0] != '\0') {
-		int length = strnlen(t, MENU_MAX_COLS) * CHAR_WIDTH;
-		switch(align)
-		{
-			case LEFT_ALIGN:
-				col = 1;
-				break;
-			case CENTER_ALIGN:
-				col = ((gr_fb_width() - length) / 2);
-				break;
-			case RIGHT_ALIGN:
-				col = gr_fb_width() - length - 1;
-				break;
-		}
-		gr_text(col, (row+1)*CHAR_HEIGHT-1, t);
-	}
-}
-
-//#define MENU_TEXT_COLOR 255, 0, 0, 255
+//#define MENU_TEXT_COLOR 255, 160, 49, 255
+#define MENU_TEXT_COLOR 0, 191, 255, 255
 #define NORMAL_TEXT_COLOR 200, 200, 200, 255
 #define HEADER_TEXT_COLOR NORMAL_TEXT_COLOR
 
-int BATT_LINE, TIME_LINE, BATT_POS, TIME_POS;
-
 // Redraw everything on the screen.  Does not flip pages.
 // Should only be called with gUpdateMutex locked.
-void draw_screen_locked(void)
+static void draw_screen_locked(void)
 {
-	if (!ui_has_initialized) return;
+    if (!ui_has_initialized) return;
     draw_background_locked(gCurrentIcon);
     draw_progress_locked();
 
-	if (show_text) {
-		gr_color(0, 0, 0, 160);
-        gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+    if (show_text) {
+        // don't "disable" the background anymore with this...
+        // gr_color(0, 0, 0, 160);
+        // gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
+        int total_rows = gr_fb_height() / CHAR_HEIGHT;
         int i = 0;
         int j = 0;
         int row = 0;            // current row that we are drawing on
         if (show_menu) {
-			// Setup our text colors
-            gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-            
-            // Show battery level
-            int batt_level = 0;
-            batt_level = get_batt_stats();
-            if(batt_level < 21) {
-				gr_color(255, 0, 0, 255);
-			}
-			char batt_text[40];
-			char time_gmt[40];
-			
-			// Get a usable time
-			struct tm *current;
-			time_t now;
-			now = time(0);
-			current = localtime(&now);
-			sprintf(batt_text, "[%d%%]", batt_level);
-			sprintf(time_gmt, "[%02D:%02D GMT]", current->tm_hour, current->tm_min);
-
-       		draw_text_line(BATT_LINE, batt_text, BATT_POS);
-       		draw_text_line(TIME_LINE, time_gmt, TIME_POS);
-
-			gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-
+#ifndef BOARD_TOUCH_RECOVERY
+            gr_color(MENU_TEXT_COLOR);
             gr_fill(0, (menu_top + menu_sel - menu_show_start) * CHAR_HEIGHT,
-			gr_fb_width(), (menu_top + menu_sel - menu_show_start + 1)*CHAR_HEIGHT+1);
-
+                    gr_fb_width(), (menu_top + menu_sel - menu_show_start + 1)*CHAR_HEIGHT+1);
 
             gr_color(HEADER_TEXT_COLOR);
             for (i = 0; i < menu_top; ++i) {
-				draw_text_line(i, menu[i], LEFT_ALIGN);
+                draw_text_line(i, menu[i]);
                 row++;
             }
 
-	        if (menu_items - menu_show_start + menu_top >= MAX_ROWS)
-				j = MAX_ROWS - menu_top;
+            if (menu_items - menu_show_start + menu_top >= max_menu_rows)
+                j = max_menu_rows - menu_top;
             else
-            	j = menu_items - menu_show_start;
+                j = menu_items - menu_show_start;
 
-            gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
+            gr_color(MENU_TEXT_COLOR);
             for (i = menu_show_start + menu_top; i < (menu_show_start + menu_top + j); ++i) {
-            	if (i == menu_top + menu_sel) {
-               		gr_color(255, 255, 255, 255);
-                    draw_text_line(i - menu_show_start , menu[i], LEFT_ALIGN);
-                    gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
+                if (i == menu_top + menu_sel) {
+                    gr_color(255, 255, 255, 255);
+                    draw_text_line(i - menu_show_start , menu[i]);
+                    gr_color(MENU_TEXT_COLOR);
                 } else {
-                    gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-                    draw_text_line(i - menu_show_start, menu[i], LEFT_ALIGN);
+                    gr_color(MENU_TEXT_COLOR);
+                    draw_text_line(i - menu_show_start, menu[i]);
                 }
                 row++;
-           	}
-			gr_fill(0, row*CHAR_HEIGHT+CHAR_HEIGHT/2-1,
-			gr_fb_width(), row*CHAR_HEIGHT+CHAR_HEIGHT/2+1);
-		}
+                if (row >= max_menu_rows)
+                    break;
+            }
 
-		gr_color(NORMAL_TEXT_COLOR);
-		for (; row < text_rows; ++row) {
-			draw_text_line(row, text[(row+text_top) % text_rows], LEFT_ALIGN);
-		}
-	}
-	draw_virtualkeys_locked();
+            gr_fill(0, row*CHAR_HEIGHT+CHAR_HEIGHT/2-1,
+                    gr_fb_width(), row*CHAR_HEIGHT+CHAR_HEIGHT/2+1);
+#else
+            row = draw_touch_menu(menu, menu_items, menu_top, menu_sel, menu_show_start);
+#endif
+        }
+
+        gr_color(NORMAL_TEXT_COLOR);
+        int cur_row = text_row;
+        int available_rows = total_rows - row - 1;
+        int start_row = row + 1;
+        if (available_rows < MAX_ROWS)
+            cur_row = (cur_row + (MAX_ROWS - available_rows)) % MAX_ROWS;
+        else
+            start_row = total_rows - MAX_ROWS;
+
+        int r;
+        for (r = 0; r < (available_rows < MAX_ROWS ? available_rows : MAX_ROWS); r++) {
+            draw_text_line(start_row + r, text[(cur_row + r) % MAX_ROWS]);
+        }
+    }
 }
 
 // Redraw everything on the screen and flip the screen (make it visible).
 // Should only be called with gUpdateMutex locked.
-void update_screen_locked(void)
+static void update_screen_locked(void)
 {
     if (!ui_has_initialized) return;
     draw_screen_locked();
@@ -493,41 +393,27 @@ static void *progress_thread(void *cookie)
 }
 
 static int rel_sum = 0;
-static int in_touch = 0; //1 = in a touch
-static int slide_right = 0;
-static int slide_left = 0;
-static int touch_x = 0;
-static int touch_y = 0;
-static int old_x = 0;
-static int old_y = 0;
-static int diff_x = 0;
-static int diff_y = 0;
-
-static void reset_gestures() {
-    diff_x = 0;
-    diff_y = 0;
-    old_x = 0;
-    old_y = 0;
-    touch_x = 0;
-    touch_y = 0;
-    printf("Gesture Tracking Reset\n\n");
-}
-
-static const char * const absval[6] = { "Value", "Min  ", "Max  ", "Fuzz ", "Flat ", "Resolution "};
 
 static int input_callback(int fd, short revents, void *data)
 {
-	struct input_event ev;
+    struct input_event ev;
     int ret;
     int fake_key = 0;
- 
+
     ret = ev_get_input(fd, revents, &ev);
     if (ret)
         return -1;
-        
+
+#ifdef BOARD_TOUCH_RECOVERY
+    if (touch_handle_input(fd, ev))
+        return 0;
+#else
+#ifdef BOARD_RECOVERY_SWIPE
+    swipe_handle_input(fd, &ev);
+#endif
+#endif
+
     if (ev.type == EV_SYN) {
-    printf("SYN Generated!\n");
-    printf("ev.type: %x, ev.code: %x, ev.value: %i\n", ev.type, ev.code, ev.value);
         return 0;
     } else if (ev.type == EV_REL) {
         if (ev.code == REL_Y) {
@@ -553,125 +439,14 @@ static int input_callback(int fd, short revents, void *data)
     } else {
         rel_sum = 0;
     }
-     
-    int abs[6] = {0};
-    int k;
-    
-    ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), abs);
-    /*for (k = 0; k < 6; k++)
-    if ((k < 3) || abs[k])
-    printf("      %s %6d\n", absval[k], abs[k]);*/
-    int max_x_touch = abs[2];
-    
-    ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), abs);
-    /*for (k = 0; k < 6; k++)
-    if ((k < 6) || abs[k])
-    printf("      %s %6d\n", absval[k], abs[k]);*/
-    int max_y_touch = abs[2];
-    
-    //printf("x and y bounds: %i x %i\n", max_x_touch, max_y_touch);
-    
-    //start touch code
-    printf("ev.type: %x, ev.code: %x, ev.value: %i\n", ev.type, ev.code, ev.value);
-    if(ev.type == EV_ABS && ev.code == ABS_MT_TRACKING_ID) {
-        if(in_touch == 0) {
-            in_touch = 1; //starting to track touch...
-            reset_gestures();
-        } else {
-            //finger lifted! lets run with this
-            ev.type = EV_KEY; //touch panel support!!!
-            int keywidth = gr_fb_width() / 3;
-            printf("Final Values touch_y: %i, touch_x: %i, fb width: %i\n", touch_y, touch_x, gr_fb_width());
-            if (touch_y > gr_fb_height() - board_touch_button_height && touch_x > 0) {
-				// finger lifted in the touch panel region
-				printf("keywidth: %d\n", keywidth);
-				if (touch_x < keywidth) {
-					printf("Up generated!\n");
-					ev.code = KEY_VOLUMEUP;
-				} else if (touch_x < keywidth*2) {
-					printf("Down generated!\n");
-					ev.code = KEY_VOLUMEDOWN;
-				} else {
-					printf("Select generated!\n");
-					ev.code = KEY_POWER;
-				}
-			}
-            if(slide_right == 1) {
-                ev.code = KEY_POWER;
-                slide_right = 0;
-            } else if(slide_left == 1) {
-                ev.code = KEY_BACK;
-                slide_left = 0;
-            }
- 
-            ev.value = 1;
-            in_touch = 0;
-            reset_gestures();
-        }
-    } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_X) {
-        old_x = touch_x;
-		float touch_x_rel = (float)ev.value / (float)max_x_touch;
-		printf("rel: %f\n", touch_x_rel);        
-		touch_x = touch_x_rel * gr_fb_width();
-		printf("Touch X is: %i\n", touch_x);
-        if(old_x != 0) diff_x += touch_x - old_x;
- 
-		printf("X diff is: %i\n", diff_x);
-     
-        //if(touch_y < gr_fb_height() - board_touch_button_height) {
-            if(diff_x > 130) {
-                printf("Gesture forward generated\n");
-                slide_right = 1;
-                ev.code = KEY_POWER;
-                ev.type = EV_KEY;
-                reset_gestures();
-            } else if(diff_x < -100) {
-                printf("Gesture back generated\n");
-                slide_left = 1;
-                ev.code = KEY_BACK;
-                ev.type = EV_KEY;
-                reset_gestures();
-            }
-        /*} else {
-          input_buttons();
-          //reset_gestures();
-        }*/
-    } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_Y) {
-        old_y = touch_y;
-        float touch_y_rel = (float)ev.value / (float)max_y_touch;
-		printf("rel: %f\n", touch_y_rel);        
-		touch_y = touch_y_rel * gr_fb_height();
-		printf("Touch Y is: %i\n", touch_y);
-		printf("Old Y is: %i\n", old_y);
-        if(old_y != 0) diff_y += touch_y - old_y;
-		printf("Diff is: %i\n", diff_y);
-                 
-        //if(touch_y < gr_fb_height() - 196) {
-            if(diff_y > 80) {
-                //printf("Gesture Down generated\n");
-                ev.code = KEY_VOLUMEDOWN;
-                ev.type = EV_KEY;
-                reset_gestures();
-            } else if(diff_y < -80) {
-                //printf("Gesture Up generated\n");
-                ev.code = KEY_VOLUMEUP;
-                ev.type = EV_KEY;
-                reset_gestures();
-            }
-        //} else {
-            //input_buttons();
-            //reset_gestures();
-        //}
-    }
-    //end touch code
-    
+
     if (ev.type != EV_KEY || ev.code > KEY_MAX)
         return 0;
- 
+
     if (ev.value == 2) {
         boardEnableKeyRepeat = 0;
     }
- 
+
     pthread_mutex_lock(&key_queue_mutex);
     if (!fake_key) {
         // our "fake" keys only report a key-down event (no
@@ -682,19 +457,19 @@ static int input_callback(int fd, short revents, void *data)
     const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
     if (ev.value > 0 && key_queue_len < queue_max) {
         key_queue[key_queue_len++] = ev.code;
-        //printf("added %i to the queue\n", ev.code);
+
         if (boardEnableKeyRepeat) {
             struct timeval now;
             gettimeofday(&now, NULL);
- 
+
             key_press_time[ev.code] = (now.tv_sec * 1000) + (now.tv_usec / 1000);
             key_last_repeat[ev.code] = 0;
         }
- 
+
         pthread_cond_signal(&key_queue_cond);
     }
     pthread_mutex_unlock(&key_queue_mutex);
- 
+
     if (ev.value > 0 && device_toggle_display(key_pressed, ev.code)) {
         pthread_mutex_lock(&gUpdateMutex);
         show_text = !show_text;
@@ -702,12 +477,11 @@ static int input_callback(int fd, short revents, void *data)
         update_screen_locked();
         pthread_mutex_unlock(&gUpdateMutex);
     }
- 
+
     if (ev.value > 0 && device_reboot_now(key_pressed, ev.code)) {
-		vold_unmount_all();
-        android_reboot(ANDROID_RB_RESTART, 0, 0);
+        reboot_main_system(ANDROID_RB_RESTART, 0, 0);
     }
- 
+
     return 0;
 }
 
@@ -721,41 +495,21 @@ static void *input_thread(void *cookie)
     return NULL;
 }
 
-int i;
-
-void ui_init_icons(void) {
-    int result;
-    switch(is_sd_theme) {
-		case 0:
-			for (i = 0; BITMAPS[i].name != NULL; ++i) {
-				result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface, 0, themename);
-			}
-			break;
-		case 1:
-			for (i = 0; BITMAPS[i].name != NULL; ++i) {
-				result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface, 1, themename);
-			}
-			break;
-		default:
-			for (i = 0; BITMAPS[i].name != NULL; ++i) {
-				result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface, 0, "hydro");
-			}
-			break;
-    }
-    if (result < 0) {
-		LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
-    }
-}
-
 void ui_init(void)
 {
     ui_has_initialized = 1;
     gr_init();
     ev_init(input_callback, NULL);
+#ifdef BOARD_TOUCH_RECOVERY
+    touch_init();
+#endif
 
     text_col = text_row = 0;
     text_rows = gr_fb_height() / CHAR_HEIGHT;
     max_menu_rows = text_rows - MIN_LOG_ROWS;
+#ifdef BOARD_TOUCH_RECOVERY
+    max_menu_rows = get_max_menu_rows(max_menu_rows);
+#endif
     if (max_menu_rows > MENU_MAX_ROWS)
         max_menu_rows = MENU_MAX_ROWS;
     if (text_rows > MAX_ROWS) text_rows = MAX_ROWS;
@@ -764,28 +518,23 @@ void ui_init(void)
     text_cols = gr_fb_width() / CHAR_WIDTH;
     if (text_cols > MAX_COLS - 1) text_cols = MAX_COLS - 1;
 
-    ui_init_icons();
+    int i;
+    for (i = 0; BITMAPS[i].name != NULL; ++i) {
+        int result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface);
+        if (result < 0) {
+            LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
+        }
+    }
 
     gProgressBarIndeterminate = malloc(ui_parameters.indeterminate_frames *
                                        sizeof(gr_surface));
-    int frame_result;
     for (i = 0; i < ui_parameters.indeterminate_frames; ++i) {
         char filename[40];
         // "indeterminate01.png", "indeterminate02.png", ...
         sprintf(filename, "indeterminate%02d", i+1);
-        switch(is_sd_theme) {
-			case 0:
-				frame_result = res_create_surface(filename, gProgressBarIndeterminate+i, 0, themename);
-				break;
-			case 1:
-				frame_result = res_create_surface(filename, gProgressBarIndeterminate+i, 1, themename);
-				break;
-			default:
-				frame_result = res_create_surface(filename, gProgressBarIndeterminate+i, 0, "hydro");
-				break;
-		}
-        if (frame_result < 0) {
-            LOGE("Missing bitmap %s\n(Code %d)\n", filename, frame_result);
+        int result = res_create_surface(filename, gProgressBarIndeterminate+i);
+        if (result < 0) {
+            LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
         }
     }
 
@@ -797,19 +546,9 @@ void ui_init(void)
             // "icon_installing_overlay01.png",
             // "icon_installing_overlay02.png", ...
             sprintf(filename, "icon_installing_overlay%02d", i+1);
-            switch(is_sd_theme) {
-				case 0:
-					frame_result = res_create_surface(filename, gInstallationOverlay+i, 0, themename);
-					break;
-				case 1:
-					frame_result = res_create_surface(filename, gInstallationOverlay+i, 1, themename);
-					break;
-				default:
-					frame_result = res_create_surface(filename, gInstallationOverlay+i, 0, "hydro");
-					break;
-			}
-            if (frame_result < 0) {
-                LOGE("Missing bitmap %s\n(Code %d)\n", filename, frame_result);
+            int result = res_create_surface(filename, gInstallationOverlay+i);
+            if (result < 0) {
+                LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
             }
         }
 
@@ -846,6 +585,7 @@ void ui_init(void)
             }
         }
     }
+
     pthread_t t;
     pthread_create(&t, NULL, progress_thread, NULL);
     pthread_create(&t, NULL, input_thread, NULL);
@@ -949,46 +689,46 @@ int ui_get_text_cols() {
 
 void ui_print(const char *fmt, ...)
 {
-	char buf[256];
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, 256, fmt, ap);
-	va_end(ap);
+    char buf[256];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, 256, fmt, ap);
+    va_end(ap);
 
-	if (ui_log_stdout)
-		fputs(buf, stdout);
-	
-	// if we are running 'ui nice' mode, we do not want to force a screen update
-	// for this line if not necessary.
-	ui_niced = 0;
-	if (ui_nice) {
-		struct timeval curtime;
-		gettimeofday(&curtime, NULL);
-		long ms = delta_milliseconds(lastupdate, curtime);
-		if (ms < NICE_INTERVAL && ms >= 0) {
-			ui_niced = 1;
-			return;
-		}
-	}
+    if (ui_log_stdout)
+        fputs(buf, stdout);
 
-	// This can get called before ui_init(), so be careful.
-	pthread_mutex_lock(&gUpdateMutex);
-	gettimeofday(&lastupdate, NULL);
-	if (text_rows > 0 && text_cols > 0) {
-		char *ptr;
-		for (ptr = buf; *ptr != '\0'; ++ptr) {
-			if (*ptr == '\n' || text_col >= text_cols) {
-				text[text_row][text_col] = '\0';
-				text_col = 0;
-				text_row = (text_row + 1) % text_rows;
-				if (text_row == text_top) text_top = (text_top + 1) % text_rows;
-			}
-			if (*ptr != '\n') text[text_row][text_col++] = *ptr;
-		}
-		text[text_row][text_col] = '\0';
-		update_screen_locked();
-	}
-	pthread_mutex_unlock(&gUpdateMutex);
+    // if we are running 'ui nice' mode, we do not want to force a screen update
+    // for this line if not necessary.
+    ui_niced = 0;
+    if (ui_nice) {
+        struct timeval curtime;
+        gettimeofday(&curtime, NULL);
+        long ms = delta_milliseconds(lastupdate, curtime);
+        if (ms < NICE_INTERVAL && ms >= 0) {
+            ui_niced = 1;
+            return;
+        }
+    }
+
+    // This can get called before ui_init(), so be careful.
+    pthread_mutex_lock(&gUpdateMutex);
+    gettimeofday(&lastupdate, NULL);
+    if (text_rows > 0 && text_cols > 0) {
+        char *ptr;
+        for (ptr = buf; *ptr != '\0'; ++ptr) {
+            if (*ptr == '\n' || text_col >= text_cols) {
+                text[text_row][text_col] = '\0';
+                text_col = 0;
+                text_row = (text_row + 1) % text_rows;
+                if (text_row == text_top) text_top = (text_top + 1) % text_rows;
+            }
+            if (*ptr != '\n') text[text_row][text_col++] = *ptr;
+        }
+        text[text_row][text_col] = '\0';
+        update_screen_locked();
+    }
+    pthread_mutex_unlock(&gUpdateMutex);
 }
 
 void ui_printlogtail(int nb_lines) {
@@ -1016,7 +756,7 @@ void ui_printlogtail(int nb_lines) {
 #define MENU_ITEM_HEADER " - "
 #define MENU_ITEM_HEADER_LENGTH strlen(MENU_ITEM_HEADER)
 
-int ui_start_menu(char** headers, char** items, int initial_selection) {
+int ui_start_menu(const char** headers, char** items, int initial_selection) {
     int i;
     pthread_mutex_lock(&gUpdateMutex);
     if (text_rows > 0 && text_cols > 0) {
@@ -1131,31 +871,25 @@ static int usb_connected() {
     return connected;
 }
 
-void ui_reset_icons()
-{
-	pthread_mutex_lock(&gUpdateMutex);
-	ui_init_icons();
-	update_screen_locked();
-	pthread_mutex_unlock(&gUpdateMutex);
-}
-
 void ui_cancel_wait_key() {
-	pthread_mutex_lock(&key_queue_mutex);
-	key_queue[key_queue_len] = -2;
-	key_queue_len++;
-	pthread_cond_signal(&key_queue_cond);
-	pthread_mutex_unlock(&key_queue_mutex);
+    pthread_mutex_lock(&key_queue_mutex);
+    key_queue[key_queue_len] = -2;
+    key_queue_len++;
+    pthread_cond_signal(&key_queue_cond);
+    pthread_mutex_unlock(&key_queue_mutex);
 }
 
 extern int volumes_changed();
 
+// delay in seconds to refresh clock and USB plugged volumes
+#define REFRESH_TIME_USB_INTERVAL 5
 int ui_wait_key()
 {
     if (boardEnableKeyRepeat) return ui_wait_key_with_repeat();
     pthread_mutex_lock(&key_queue_mutex);
     int timeouts = UI_WAIT_KEY_TIMEOUT_SEC;
 
-    // Time out after 1 second to catch volume changes, and loop for
+    // Time out after REFRESH_TIME_USB_INTERVAL seconds to catch volume changes, and loop for
     // UI_WAIT_KEY_TIMEOUT_SEC to restart a device not connected to USB
     do {
         struct timeval now;
@@ -1163,22 +897,25 @@ int ui_wait_key()
         gettimeofday(&now, NULL);
         timeout.tv_sec = now.tv_sec;
         timeout.tv_nsec = now.tv_usec * 1000;
-        timeout.tv_sec += 1;
+        timeout.tv_sec += REFRESH_TIME_USB_INTERVAL;
 
         int rc = 0;
         while (key_queue_len == 0 && rc != ETIMEDOUT) {
             rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
                                         &timeout);
             if (volumes_changed()) {
-				pthread_mutex_unlock(&key_queue_mutex);
-				return REFRESH;
-			}
+                pthread_mutex_unlock(&key_queue_mutex);
+                return REFRESH;
+            }
         }
-        timeouts--;
-    } while ((timeouts || usb_connected()) && key_queue_len == 0);
+        timeouts -= REFRESH_TIME_USB_INTERVAL;
+    } while ((timeouts > 0 || usb_connected()) && key_queue_len == 0);
 
-    int key = key_queue[0];
-    memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+    int key = -1;
+    if (key_queue_len > 0) {
+        key = key_queue[0];
+        memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+    }
     pthread_mutex_unlock(&key_queue_mutex);
     return key;
 }
@@ -1202,21 +939,31 @@ int ui_wait_key_with_repeat()
 
     // Loop to wait for more keys.
     do {
+        int timeouts = UI_WAIT_KEY_TIMEOUT_SEC;
+        int rc = 0;
         struct timeval now;
         struct timespec timeout;
-        gettimeofday(&now, NULL);
-        timeout.tv_sec = now.tv_sec;
-        timeout.tv_nsec = now.tv_usec * 1000;
-        timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
-
-        int rc = 0;
         pthread_mutex_lock(&key_queue_mutex);
-        while (key_queue_len == 0 && rc != ETIMEDOUT) {
-            rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
-                                        &timeout);
+        while (key_queue_len == 0 && timeouts > 0) {
+            gettimeofday(&now, NULL);
+            timeout.tv_sec = now.tv_sec;
+            timeout.tv_nsec = now.tv_usec * 1000;
+            timeout.tv_sec += REFRESH_TIME_USB_INTERVAL;
+
+            rc = 0;
+            while (key_queue_len == 0 && rc != ETIMEDOUT) {
+                rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
+                                            &timeout);
+                if (volumes_changed()) {
+                    pthread_mutex_unlock(&key_queue_mutex);
+                    return REFRESH;
+                }
+            }
+            timeouts -= REFRESH_TIME_USB_INTERVAL;
         }
         pthread_mutex_unlock(&key_queue_mutex);
-        if (rc == ETIMEDOUT && !usb_connected() && !volumes_changed()) {
+
+        if (rc == ETIMEDOUT && !usb_connected()) {
             return -1;
         }
 
@@ -1291,12 +1038,12 @@ void ui_clear_key_queue() {
 }
 
 void ui_set_log_stdout(int enabled) {
-	ui_log_stdout = enabled;
+    ui_log_stdout = enabled;
 }
 
 int ui_should_log_stdout()
 {
-	return ui_log_stdout;
+    return ui_log_stdout;
 }
 
 void ui_set_show_text(int value) {
@@ -1320,7 +1067,11 @@ int ui_get_selected_item() {
 }
 
 int ui_handle_key(int key, int visible) {
-	return device_handle_key(key, visible);
+#ifdef BOARD_TOUCH_RECOVERY
+    return touch_handle_key(key, visible);
+#else
+    return device_handle_key(key, visible);
+#endif
 }
 
 void ui_delete_line() {
@@ -1336,21 +1087,28 @@ void ui_increment_frame() {
         (gInstallingFrame + 1) % ui_parameters.installing_frames;
 }
 
-int get_batt_stats(void) {
-	static int level = -1;
-	
-	char value[4];
-	FILE * capacity = fopen("/sys/class/power_supply/battery/capacity","rt");
-	if (capacity) {
-		fgets(value, 4, capacity);
-		fclose(capacity);
-		level = atoi(value);
-		
-		if (level > 100)
-			level = 100;
-		if (level < 0)
-			level = 0;
-		
-	}
-	return level;
+int ui_get_rainbow_mode() {
+    return gRainbowMode;
 }
+
+void ui_rainbow_mode() {
+    static int colors[] = { 255, 0, 0,        // red
+                            255, 127, 0,      // orange
+                            255, 255, 0,      // yellow
+                            0, 255, 0,        // green
+                            60, 80, 255,      // blue
+                            143, 0, 255 };    // violet
+
+    gr_color(colors[cur_rainbow_color], colors[cur_rainbow_color+1], colors[cur_rainbow_color+2], 255);
+    cur_rainbow_color += 3;
+    if (cur_rainbow_color >= sizeof(colors)/sizeof(colors[0])) cur_rainbow_color = 0;
+}
+
+void ui_set_rainbow_mode(int rainbowMode) {
+    gRainbowMode = rainbowMode;
+
+    pthread_mutex_lock(&gUpdateMutex);
+    update_screen_locked();
+    pthread_mutex_unlock(&gUpdateMutex);
+}
+
