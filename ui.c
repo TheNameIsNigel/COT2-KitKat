@@ -709,7 +709,7 @@ static int input_callback(int fd, short revents, void *data)
   if (ev.value > 0 && key_queue_len < queue_max) {
     // we don't want to pollute the queue with mouse move events
     if (ev.code!=BTN_WHEEL || key_queue_len==0 || key_queue[key_queue_len-1]!=BTN_WHEEL) {
-      key_queue[key_queue_len++] = ev.code
+      key_queue[key_queue_len++] = ev.code;
     }
     
     if (boardEnableKeyRepeat) {
