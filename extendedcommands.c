@@ -1393,9 +1393,9 @@ int can_partition(const char* volume) {
 
 
 #ifdef ENABLE_LOKI
-#define FIXED_ADVANCED_ENTRIES 8
+#define FIXED_ADVANCED_ENTRIES 9
 #else
-#define FIXED_ADVANCED_ENTRIES 7
+#define FIXED_ADVANCED_ENTRIES 8
 #endif
 
 int show_advanced_menu() {
