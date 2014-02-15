@@ -1002,7 +1002,6 @@ main(int argc, char **argv) {
     printf("Starting recovery on %s\n", ctime(&start));
 
     device_ui_init(&ui_parameters);
-    ui_init();
 
 #ifdef BOARD_RECOVERY_SWIPE
 #ifndef BOARD_TOUCH_RECOVERY
@@ -1015,6 +1014,7 @@ main(int argc, char **argv) {
 
     load_volume_table();
     process_volumes();
+    ui_init();
     vold_client_start(&v_callbacks, 0);
     vold_set_automount(1);
     setup_legacy_storage_paths();

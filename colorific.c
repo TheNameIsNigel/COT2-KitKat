@@ -83,7 +83,8 @@ void get_config_settings() {
 	FILE *in_file;
 	int i, j, k, l;
 
-	ensure_path_mounted("/sdcard");
+	ensure_path_mounted(get_primary_storage_path());
+	LOGI("Primary storage path: %s\n", get_primary_storage_path());
 	ensure_directory("/sdcard/clockworkmod");
 
 	if(in_file = fopen(UI_CONFIG_FILE, "r")) {
@@ -97,17 +98,6 @@ void get_config_settings() {
 		LOGI("%s %i\n", "EC_UICOLOR2: ", UICOLOR2);
 		LOGI("%s %i\n", "EC_bg_icon: ", bg_icon);
 		fclose(in_file);
-		ensure_path_unmounted("/sdcard");
-		/*switch(bg_icon) {
-			// Use a define (in common.h) for easier color reference.
-			case DOODERBUTT_BLUE_UI:
-				ui_set_background(BACKGROUND_ICON_DOODERBUTT);
-				break;
-			// Anything else is the clockwork icon
-			default:
-				ui_set_background(BACKGROUND_ICON_CLOCKWORK);
-				break;
-		}*/
 	} else {
 		set_ui_default();
 	}
