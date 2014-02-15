@@ -149,20 +149,14 @@ void parse_settings() {
 void handle_theme(char * theme_name) {
   LOGI("Attempting to load theme %s\n", theme_name);
   dictionary * ini ;
-  char       * ini_name ;
-  char full_theme_file;
-  char theme_base;
-  char theme_end;
-  full_theme_file = "";
-  
-  theme_base = "/res/theme/theme_";
-  theme_end = ".ini";
+  char * theme_base = "/res/theme/theme_";
+  char * theme_end = ".ini";
+  char * full_theme_file = malloc(strlen(theme_base) + strlen(theme_end) + strlen(theme_name));
   strcpy(full_theme_file, theme_base);
-  strcpy(full_theme_file, theme_name);
-  strcpy(full_theme_file, theme_end);
-  ini_name = full_theme_file;
+  strcat(full_theme_file, theme_name);
+  strcat(full_theme_file, theme_end);
   
-  ini = iniparser_load(ini_name);
+  ini = iniparser_load(full_theme_file);
   if (ini==NULL) {
     LOGI("Can't load theme %s!\n", full_theme_file);
     return;
