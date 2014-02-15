@@ -90,7 +90,7 @@ void create_default_settings(void) {
     "SignatureCheckEnabled = 1 ;\n"
     "\n");
     fclose(ini);
-  )
+  );
 }
 
 void load_fallback_settings() {
