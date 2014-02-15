@@ -50,7 +50,8 @@
 #include "extendedcommands.h"
 #include "flashutils/flashutils.h"
 #include "dedupe/dedupe.h"
-#include "colorific.h"
+#include "settings.h"
+#include "settingsparser.h"
 #include "voldclient/voldclient.h"
 
 #include "recovery_cmds.h"
@@ -826,6 +827,20 @@ prompt_and_wait() {
                     }
                     break;
 
+		case ITEM_WIPE_ALL:
+		{
+		  if (confirm_selection("Confirm wipe all?", "Yes - Wipe All"))
+		  {
+		    ui_print("\n-- Wiping system, data, cache...\n");
+		    erase_volume("/system");
+		    erase_volume("/data");
+		    erase_volume("/cache");
+		    ui_print("\nFull wipe complete!\n");
+		    if (!ui_text_visible()) return;
+		  }
+		  break;
+		}
+		
                 case ITEM_APPLY_ZIP:
                     ret = show_install_update_menu();
                     break;
@@ -1123,8 +1138,7 @@ main(int argc, char **argv) {
         is_user_initiated_recovery = 1;
         if (!headless) {
             ui_set_show_text(1);
-            get_config_settings();
-	    ui_dyn_background();
+            parse_settings();
         }
 
         if (extendedcommand_file_exists()) {

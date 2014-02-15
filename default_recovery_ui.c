@@ -46,12 +46,19 @@ int maxY = 2104;	// set to 0 for debugging
 int resX = 800;
 int resY = 1200;
 
+/* Set the following value to restrict the touch boundaries so that
+ * only the buttons are active instead of the full screen; set to 0
+ * for full screen debugging
+ */
+int touchY = 0;
+
 char* MENU_HEADERS[] = { NULL };
 
 char* MENU_ITEMS[] = { "reboot system now",
                        "install zip",
                        "wipe data/factory reset",
                        "wipe cache partition",
+		       "wipe syste, data, cache",
                        "backup and restore",
                        "mounts and storage",
                        "advanced",

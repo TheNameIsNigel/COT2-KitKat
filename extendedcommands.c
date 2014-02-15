@@ -40,8 +40,9 @@
 #include <libgen.h>
 #include "mtdutils/mtdutils.h"
 #include "bmlutils/bmlutils.h"
-#include "colorific.h"
 #include "cutils/android_reboot.h"
+#include "settings.h"
+#include "settingsparser.h"
 
 #define ABS_MT_POSITION_X 0x35	/* Center X ellipse position */
 
@@ -50,7 +51,6 @@
 
 #include "adb_install.h"
 
-int signature_check_enabled = 1;
 int script_assert_enabled = 1;
 
 int get_filtered_menu_selection(const char** headers, char** items, int menu_only, int initial_selection, int items_count) {
@@ -129,11 +129,6 @@ const char* read_last_install_path() {
   return NULL;
 }
 
-void toggle_signature_check() {
-  signature_check_enabled = !signature_check_enabled;
-  ui_print("Signature Check: %s\n", signature_check_enabled ? "Enabled" : "Disabled");
-}
-
 void toggle_ui_debugging()
 
 {
@@ -183,15 +178,15 @@ int install_zip(const char* packagefilepath) {
   }
   #endif
   
-  ui_set_background(BACKGROUND_ICON_NONE);
   ui_print("\nInstall from sdcard complete.\n");
+  ui_init_icons();
   return 0;
 }
 
 // top fixed menu items, those before extra storage volumes
 #define FIXED_TOP_INSTALL_ZIP_MENUS 1
 // bottom fixed menu items, those after extra storage volumes
-#define FIXED_BOTTOM_INSTALL_ZIP_MENUS 3
+#define FIXED_BOTTOM_INSTALL_ZIP_MENUS 2
 #define FIXED_INSTALL_ZIP_MENUS (FIXED_TOP_INSTALL_ZIP_MENUS + FIXED_BOTTOM_INSTALL_ZIP_MENUS)
 
 int show_install_update_menu() {
@@ -220,10 +215,9 @@ int show_install_update_menu() {
   // FIXED_BOTTOM_INSTALL_ZIP_MENUS
   install_menu_items[FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes] = "choose zip from last install folder";
   install_menu_items[FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 1] = "install zip from sideload";
-  install_menu_items[FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 2] = "toggle signature verification";
   
   // extra NULL for GO_BACK
-  install_menu_items[FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 3] = NULL;
+  install_menu_items[FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 2] = NULL;
   
   for (;;) {
     chosen_item = get_menu_selection(headers, install_menu_items, 0, 0);
@@ -240,8 +234,6 @@ int show_install_update_menu() {
 	show_choose_zip_menu(last_path_used);
     } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 1) {
       apply_from_adb();
-    } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 2) {
-      toggle_signature_check();
     } else {
       // GO_BACK or REFRESH (chosen_item < 0)
       goto out;
@@ -441,6 +433,17 @@ void show_choose_zip_menu(const char *mount_point) {
     return;
   }
   
+  static char *INSTALL_OR_BACKUP_ITEMS[] = {
+    "Yes - Backup and install",
+    "No - Install without backup",
+    "Cancel Install",
+    NULL
+  };
+  
+#define ITEM_BACKUP_AND_INSTALL 0
+#define ITEM_INSTALL_WOUT_BACKUP 1
+#define ITEM_CANCELL_INSTALL 2
+  
   static const char* headers[] = { "Choose a zip to apply", "", NULL };
   
   char* file = choose_file_menu(mount_point, ".zip", headers);
@@ -500,6 +503,46 @@ void show_nandroid_delete_menu(const char* path) {
   free(file);
 }
 
+int show_lowspace_menu(int i, const char* backup_path) {
+  static char *LOWSPACE_MENU_ITEMS[] = {
+    "Continue with backup",
+    "View and delete old backups",
+    "Cancel backup",
+    NULL
+  };
+#define ITEM_CONTINUE_BACKUP 0
+#define ITEM_VIEW_DELETE_BACKUPS 1
+#define ITEM_CANCEL_BACKUP 2
+  static char* headers[] = {
+    "Limited space available!",
+    "",
+    "There may not be enough space",
+    "to continue backup.",
+    "",
+    "What would you like to do?",
+    "",
+    NULL
+  };
+  
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, LOWSPACE_MENU_ITEMS, 0, 0);
+    switch(chosen_item) {
+      case ITEM_CONTINUE_BACKUP:
+      {
+	static char tmp;
+	ui_print("Proceeding with backup.\n");
+	return 0;
+      }
+      case ITEM_VIEW_DELETE_BACKUPS:
+	show_nandroid_delete_menu(get_primary_storage_path());
+	break;
+      default:
+	ui_print("Cancelling backup.\n");
+	return 1;
+    }
+  }
+}
+
 static int control_usb_storage(bool on) {
   int i = 0;
   int num = 0;
@@ -544,6 +587,50 @@ void show_mount_usb_storage_menu() {
 }
 
 int confirm_selection(const char* title, const char* confirm) {
+  struct stat info;
+  int ret = 0;
+  
+  char path[PATH_MAX];
+  sprintf(path, "%s%s%s", get_primary_storage_path(), (is_data_media() ? "/0/" : "/"), RECOVERY_NO_CONFIRM_FILE);
+  ensure_path_mounted(path);
+  if (0 == stat(path, &info))
+    return 1;
+  
+  int many_confirm;
+  char* confirm_str = strdup(confirm);
+  const char* confirm_headers[] = { title, "  THIS CAN NOT BE UNDONE.", "", NULL };
+  
+  sprintf(path, "%s%s%s", get_primary_storage_path(), (is_data_media() ? "/0/" : "/"), RECOVERY_MANY_CONFIRM_FILE);
+  ensure_path_mounted(path);
+  many_confirm = 0 == stat(path, &info);
+  
+  if (many_confirm) {
+    char* items[] = { "No",
+      "No",
+      "No",
+      "No",
+      "No",
+      "No",
+      "No",
+      confirm_str, // Yes, [7]
+      "No",
+      "No",
+      "No",
+      NULL };
+      int chosen_item = get_menu_selection(confirm_headers, items, 0, 0);
+      ret = (chosen_item == 7);
+  } else {
+    char* items[] = { "No",
+      confirm_str, // Yes, [1]
+      NULL };
+      int chosen_item = get_menu_selection(confirm_headers, items, 0, 0);
+      ret = (chosen_item == 1);
+  }
+  free(confirm_str);
+  return ret;
+}
+
+int confirm_nandroid_backup(const char* title, const char* confirm) {
   struct stat info;
   int ret = 0;
   
@@ -1502,7 +1589,7 @@ int show_advanced_menu() {
   
   list[2] = "Power Off";
   list[3] = "Wipe Dalvik Cache";
-  list[4] = "Set UI Color";
+  list[4] = "COT Settings";
   list[5] = "Debugging Options";
   #ifdef ENABLE_LOKI
   list[6] = "Toggle Loki Support";
@@ -1568,26 +1655,8 @@ int show_advanced_menu() {
       }
       case 4:
       {
-	static char* ui_colors[] = {
-	  "Hydro (default)",
-	  "Blood Red",
-	  "Key Lime Pie",
-	  "Citrus Orange",
-	  "Dooderbutt Blue",
-	  NULL
-	};
-	static char* ui_header[] = {
-	  "UI Color",
-	  "",
-	  NULL
-	};
-	int ui_color = get_menu_selection(ui_header, ui_colors, 0, 0);
-	if (ui_color == GO_BACK) {
-	  continue;
-	} else {
-	  set_ui_color(ui_color);
-	  break;
-	}
+	show_settings_menu();
+	break;
       }
       case 5:
       {

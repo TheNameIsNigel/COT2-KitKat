@@ -18,7 +18,10 @@
 #include <fcntl.h>
 #include <linux/input.h>
 #include "recovery_ui.h"
-#include "colorific.h"
+#include "settings.h"
+#include "settingsparser.h"
+#include "iniparser/iniparser.h"
+#include "iniparser/dictionary.h"
 
 // Include extendedcommand.h in order to get our custom ui colors
 #include "extendedcommands.h"
@@ -310,20 +313,8 @@ static void draw_install_overlay_locked(int frame) {
 static void draw_background_locked(int icon)
 {
   gPagesIdentical = 0;
-  // gr_color(0, 0, 0, 255);
-  // gr_fill(0, 0, gr_fb_width(), gr_fb_height());
-  
-  {
-    int bw = gr_get_width(gBackground);
-    int bh = gr_get_height(gBackground);
-    int bx = 0;
-    int by = 0;
-    for (by = 0; by < gr_fb_height(); by += bh) {
-      for (bx = 0; bx < gr_fb_width(); bx += bw) {
-	gr_blit(gBackground, 0, 0, bw, bh, bx, by);
-      }
-    }
-  }
+  gr_color(0, 0, 0, 255);
+  gr_fill(0, 0, gr_fb_width(), gr_fb_height());
   
   if (icon) {
     gr_surface surface = gBackgroundIcon[icon];
@@ -435,9 +426,6 @@ static void draw_screen_locked(void)
       draw_icon_locked(gMenuIcon[MENU_SELECT], MENU_ICON[MENU_SELECT].x, MENU_ICON[MENU_SELECT].y );
       
       // Setup our text colors
-      get_config_settings();
-      LOGI("%s %i\n", "UI_BG:", bg_icon);
-      set_bg_icon(bg_icon);
       gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
       gr_fill(0, (menu_top + menu_sel - menu_show_start) * CHAR_HEIGHT,
 	      gr_fb_width(), (menu_top + menu_sel - menu_show_start + 1)*CHAR_HEIGHT+1);
@@ -834,33 +822,10 @@ static void *input_thread(void *cookie)
   return NULL;
 }
 
-void ui_init(void)
-{
-  ui_has_initialized = 1;
-  gr_init();
-  ev_init(input_callback, NULL);
-  #ifdef BOARD_TOUCH_RECOVERY
-  touch_init();
-  #endif
-  
-  text_col = text_row = 0;
-  text_rows = gr_fb_height() / CHAR_HEIGHT;
-  max_menu_rows = text_rows - MIN_LOG_ROWS;
-  #ifdef BOARD_TOUCH_RECOVERY
-  max_menu_rows = get_max_menu_rows(max_menu_rows);
-  #endif
-  if (max_menu_rows > MENU_MAX_ROWS)
-    max_menu_rows = MENU_MAX_ROWS;
-  if (text_rows > MAX_ROWS) text_rows = MAX_ROWS;
-  text_top = 1;
-  
-  text_cols = gr_fb_width() / CHAR_WIDTH;
-  if (text_cols > MAX_COLS - 1) text_cols = MAX_COLS - 1;
-  
-  int i;
-  get_config_settings();
+int i;
+void ui_init_icons(void) {
   int result;
-  switch(bg_icon) {
+  switch(UITHEME) {
     case BLOOD_RED_UI:
       for (i = 0; BITMAPS_BLOODRED[i].name != NULL; ++i) {
 	result = res_create_surface(BITMAPS_BLOODRED[i].name, BITMAPS_BLOODRED[i].surface);
@@ -890,7 +855,26 @@ void ui_init(void)
   if (result < 0) {
     LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
   }
+}
+
+void ui_init(void)
+{
+  ui_has_initialized = 1;
+  gr_init();
+  ev_init(input_callback, NULL);
   
+  text_col = text_row = 0;
+  text_rows = gr_fb_height() / CHAR_HEIGHT;
+  max_menu_rows = text_rows - MIN_LOG_ROWS;
+  if (max_menu_rows > MENU_MAX_ROWS)
+    max_menu_rows = MENU_MAX_ROWS;
+  if (text_rows > MAX_ROWS) text_rows = MAX_ROWS;
+  text_top = 1;
+  
+  text_cols = gr_fb_width() / CHAR_WIDTH;
+  if (text_cols > MAX_COLS - 1) text_cols = MAX_COLS - 1;
+  
+  ui_init_icons();
   gProgressBarIndeterminate = malloc(ui_parameters.indeterminate_frames *
   sizeof(gr_surface));
   for (i = 0; i < ui_parameters.indeterminate_frames; ++i) {
@@ -1241,6 +1225,14 @@ static int usb_connected() {
 	   strerror(errno));
   }
   return connected;
+}
+
+void ui_reset_icons()
+{
+  pthread_mutex_lock(&gUpdateMutex);
+  ui_init_icons();
+  update_screen_locked();
+  pthread_mutex_unlock(&gUpdateMutex);
 }
 
 void ui_cancel_wait_key() {

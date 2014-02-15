@@ -36,6 +36,8 @@
 #include "firmware.h"
 
 #include "extendedcommands.h"
+#include "settings.h"
+#include "settingsparser.h"
 
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
