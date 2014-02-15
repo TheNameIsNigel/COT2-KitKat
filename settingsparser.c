@@ -67,7 +67,7 @@ int backupprompt = 0;
 int orswipeprompt = 0;
 int orsreboot = 0;
 int signature_check_enabled = 0;
-char* currenttheme;
+char * currenttheme;
 
 void create_default_settings(void) {
   FILE * ini;
