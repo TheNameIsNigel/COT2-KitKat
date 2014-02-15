@@ -14,5 +14,5 @@
 #
 # ignore the res and gui folders as they have separate repos
 #
-/res
-/gui
+#/res
+#/gui
