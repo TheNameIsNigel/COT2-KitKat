@@ -153,6 +153,7 @@ void handle_theme(char * theme_name) {
   char full_theme_file;
   char theme_base;
   char theme_end;
+  full_theme_file = "";
   
   theme_base = "/res/theme/theme_";
   theme_end = ".ini";
