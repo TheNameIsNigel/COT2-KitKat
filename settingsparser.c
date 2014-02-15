@@ -106,7 +106,9 @@ void update_cot_settings(void) {
   LOGI("Updating COT Settings...\n");
   dictionary * ini ;
   char       * ini_name ;
+  FILE * ini_file;
   ini_name = COTSETTINGS;
+  ini_file = fopen_path(ini_name, "w");
   LOGI("Loading current ini...\n");
   ini = iniparser_load(ini_name);
   if (ini==NULL) {
@@ -114,12 +116,14 @@ void update_cot_settings(void) {
   } else {
     LOGI("Current INI loaded!\n");
   }
-  iniparser_set(ini, "settings:theme", "hydro");
+  iniparser_set(ini, "settings", NULL);
+  iniparser_set(ini, "settings:theme", currenttheme);
   iniparser_set(ini, "settings:orsreboot", "0");
-  iniparser_set(ini, "settings:orswipeprompt", "1");
+  iniparser_set(ini, "settings:orswipeprompt", "0");
   iniparser_set(ini, "settings:backupprompt", "1");
-  iniparser_set(ini, "settings:signaturecheckenabled", "1");
-  iniparser_dump_ini(ini, ini_name);
+  iniparser_set(ini, "settings:signaturecheckenabled", "0");
+  iniparser_dump_ini(ini, ini_file);
+  fclose(ini_file);
   iniparser_freedict(ini);
   LOGI("Settings updated!\n");
   parse_settings();
