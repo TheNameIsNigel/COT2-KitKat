@@ -83,9 +83,15 @@ void get_config_settings() {
 	FILE *in_file;
 	int i, j, k, l;
 
-	ensure_path_mounted(get_primary_storage_path());
-	LOGI("Primary storage path: %s\n", get_primary_storage_path());
-	ensure_directory("/sdcard/clockworkmod");
+	char* spath = get_primary_storage_path();
+	char* mpath = "/clockworkmod";
+	char* fullpath = malloc(strlen(spath) + strlen(mpath) + 2);
+	strcpy(fullpath, spath);
+	strcat(fullpath, mpath);
+	ensure_path_mounted(spath);
+	LOGI("Primary storage path: %s\n", spath);
+	ensure_directory(fullpath);
+	LOGI("Full COT Path: %s\n", fullpath);
 
 	if(in_file = fopen(UI_CONFIG_FILE, "r")) {
 		fscanf(in_file, "%d%d%d%d", &i, &j, &k, &l);
