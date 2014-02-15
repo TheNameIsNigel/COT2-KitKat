@@ -107,11 +107,11 @@ void update_cot_settings(void) {
   char       * ini_name ;
   ini_name = COTSETTINGS;
   ini = iniparser_load(ini_name);
-  iniparser_set(ini, "settings:Theme", "Hydro");
-  iniparser_set(ini, "settings:ORSReboot", "0");
-  iniparser_set(ini, "settings:ORSWipePrompt", "1");
-  iniparser_set(ini, "settings:BackupPrompt", "1");
-  iniparser_set(ini, "settings:SignatureCheckEnabled", "1");
+  iniparser_set(ini, "settings:theme", "Hydro");
+  iniparser_set(ini, "settings:orsreboot", "0");
+  iniparser_set(ini, "settings:orswipeprompt", "1");
+  iniparser_set(ini, "settings:backupprompt", "1");
+  iniparser_set(ini, "settings:signaturecheckenabled", "1");
   iniparser_dump_ini(ini, ini_name);
   iniparser_freedict(ini);
   parse_settings();
