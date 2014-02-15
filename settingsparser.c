@@ -116,12 +116,22 @@ void update_cot_settings(void) {
   } else {
     LOGI("Current INI loaded!\n");
   }
+  char * ini_orsreboot[1];
+  char * ini_orswipeprompt[1];
+  char * ini_backupprompt[1];
+  char * ini_signaturecheckenabled[1];
+  
+  sprintf(ini_orsreboot, "%d", orsreboot);
+  sprintf(ini_orswipeprompt, "%d", orswipeprompt);
+  sprintf(ini_backupprompt, "%d", backupprompt);
+  sprintf(ini_signaturecheckenabled, "%d", signature_check_enabled);
+  
   iniparser_set(ini, "settings", NULL);
   iniparser_set(ini, "settings:theme", currenttheme);
-  iniparser_set(ini, "settings:orsreboot", "0");
-  iniparser_set(ini, "settings:orswipeprompt", "0");
-  iniparser_set(ini, "settings:backupprompt", "1");
-  iniparser_set(ini, "settings:signaturecheckenabled", "0");
+  iniparser_set(ini, "settings:orsreboot", ini_orsreboot);
+  iniparser_set(ini, "settings:orswipeprompt", ini_orswipeprompt);
+  iniparser_set(ini, "settings:backupprompt", ini_backupprompt);
+  iniparser_set(ini, "settings:signaturecheckenabled", ini_signaturecheckenabled);
   iniparser_dump_ini(ini, ini_file);
   fclose(ini_file);
   iniparser_freedict(ini);
