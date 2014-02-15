@@ -87,10 +87,9 @@ void create_default_settings(void) {
     "ORSReboot = 0 ;\n"
     "ORSWipePrompt = 1 ;\n"
     "BackupPrompt = 1 ;\n"
-    "SignatureCheckEnabled = 1 ;\n"
+    "SignatureCheckEnabled = 1s ;\n"
     "\n");
-    fclose(ini);
-  );
+  fclose(ini);
 }
 
 void load_fallback_settings() {
