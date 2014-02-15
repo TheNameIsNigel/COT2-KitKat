@@ -82,12 +82,12 @@ void create_default_settings(void) {
     "; COT Settings INI\n"
     ";\n"
     "\n"
-    "[Settings]\n"
-    "Theme = hydro ;\n"
-    "ORSReboot = 0 ;\n"
-    "ORSWipePrompt = 1 ;\n"
-    "BackupPrompt = 1 ;\n"
-    "SignatureCheckEnabled = 1s ;\n"
+    "[settings]\n"
+    "theme = hydro ;\n"
+    "orsreboot = 0 ;\n"
+    "orswipeprompt = 1 ;\n"
+    "backupprompt = 1 ;\n"
+    "signaturecheckenabled = 1s ;\n"
     "\n");
   fclose(ini);
 }
@@ -137,6 +137,11 @@ void parse_settings() {
   backupprompt = iniparser_getint(ini, "settings:backupprompt", NULL);
   signature_check_enabled = iniparser_getint(ini, "settings:signaturecheckenabled", NULL);
   currenttheme = iniparser_getstring(ini, "settings:theme", NULL);
+  LOGI("ORSReboot: %d\n", orsreboot);
+  LOGI("ORSWipePrompt: %d\n", orswipeprompt);
+  LOGI("BackupPrompt: %d\n", backupprompt);
+  LOGI("SigCheck: %d\n", signature_check_enabled);
+  LOGI("Theme: %s\n", currenttheme);
   LOGI("Settings loaded!\n");
   handle_theme(currenttheme);
 }
