@@ -50,9 +50,13 @@
 #include "extendedcommands.h"
 #include "flashutils/flashutils.h"
 #include "dedupe/dedupe.h"
+#include "colorific.h"
 #include "voldclient/voldclient.h"
 
 #include "recovery_cmds.h"
+
+#define ABS_MT_POSITION_X 0x35
+#define ABS_MT_POSITION_Y 0x36
 
 struct selabel_handle *sehandle = NULL;
 
@@ -559,17 +563,8 @@ get_menu_selection(const char** headers, char** items, int menu_only,
 	key = ui_wait_key();
         int visible = ui_text_visible();
 
-        if (key == -1) {   // ui_wait_key() timed out
-            if (ui_text_ever_visible()) {
-                continue;
-            } else {
-                LOGI("timed out waiting for key input; rebooting.\n");
-                ui_end_menu();
-                return ITEM_REBOOT;
-            }
-        }
         else if (key == -2) {   // we are returning from ui_cancel_wait_key(): trigger a GO_BACK
-            return GO_BACK;
+	  return GO_BACK;
         }
         else if (key == -3) {   // an USB device was plugged in (returning from ui_wait_key())
             return REFRESH;
@@ -1135,7 +1130,8 @@ main(int argc, char **argv) {
         is_user_initiated_recovery = 1;
         if (!headless) {
             ui_set_show_text(1);
-            ui_set_background(BACKGROUND_ICON_CLOCKWORK);
+            get_config_settings();
+	    ui_dyn_background();
         }
 
         if (extendedcommand_file_exists()) {
