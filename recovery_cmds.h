@@ -23,7 +23,9 @@
 #include "extendedcommands.h"
 #include "nandroid.h"
 #include "dedupe/dedupe.h"
+#include "settingsparser.h"
 
+extern int settheme_main(int argc, char **argv);
 extern int minizip_main(int argc, char **argv);
 extern int flash_image_main(int argc, char **argv);
 extern int edify_main(int argc, char **argv);
@@ -55,6 +57,7 @@ struct recovery_cmd {
 };
 
 static const struct recovery_cmd recovery_cmds[] = {
+    { "settheme",	settheme_main},
     { "minizip",        minizip_main },
     { "dedupe",         dedupe_main },
     { "flash_image",    flash_image_main },

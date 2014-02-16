@@ -73,6 +73,24 @@ int orsreboot = 0;
 int signature_check_enabled = 0;
 char * currenttheme;
 
+int settheme_main(int argc, char *argv[])
+{
+    if(argc != 2) {
+        fprintf(stderr,"usage: settheme <theme>\n");
+        return 1;
+    }
+
+    //TODO: Add error checking
+    theme_set(argv[1]);
+    return 0;
+}
+
+int theme_set(char * theme) {
+  currenttheme = theme;
+  update_cot_settings();
+  return 0;
+}
+
 void create_default_settings(void) {
   FILE * ini;
   if (ini = fopen_path(settings_ini_path, "r")) {
@@ -107,7 +125,6 @@ void load_fallback_settings() {
 }
 
 void update_cot_settings(void) {
-  //set_settings_ini_path();
   dictionary * ini ;
   char       * ini_name ;
   FILE * ini_file;
