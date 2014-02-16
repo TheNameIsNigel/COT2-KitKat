@@ -844,7 +844,7 @@ prompt_and_wait() {
                     break;
 
                 case ITEM_ADVANCED:
-                    ret = show_cot_options_menu();
+                    ret = show_advanced_menu();
                     break;
 		    
 		case ITEM_POWEROPTIONS:
