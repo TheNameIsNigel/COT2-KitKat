@@ -1496,77 +1496,10 @@ int can_partition(const char* volume) {
   return 1;
 }
 
-void show_advanced_debugging_menu() {
-  static char* headers[] = { "Debugging Options",
-    "",
-    NULL
-  };
-  
-  static char* list[] = { "Report Error",
-    "Key Test",
-    "Show Log",
-    "Toggle UI Debugging",
-    NULL
-  };
-  
-  for (;;) {
-    int chosen_item = get_menu_selection(headers, list, 0, 0);
-    if(chosen_item == GO_BACK)
-      break;
-    switch(chosen_item) {
-      case 0:
-      {
-	handle_failure(1);
-	break;
-      }
-      case 1:
-      {
-	ui_print("Outputting key codes.\n");
-	ui_print("Go back to end debugging.\n");
-	struct keyStruct{
-	  int code;
-	  int x;
-	  int y;
-	}*key;
-	int action;
-	do
-	{
-	  if(key->code == ABS_MT_POSITION_X) {
-	    action = device_handle_mouse(key, 1);
-	    ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
-	  } else {
-	    action = device_handle_key(key->code, 1);
-	    ui_print("Key: %x\n", key->code);
-	  }
-	}
-	while (action != GO_BACK);
-	break;
-      }
-      case 2:
-      {
-	ui_printlogtail(12);
-	break;
-      }
-      case 3:
-      {
-	toggle_ui_debugging();
-	break;
-      }
-    }
-  }
-}
-
-
-#ifdef ENABLE_LOKI
-#define FIXED_ADVANCED_ENTRIES 7
-#else
-#define FIXED_ADVANCED_ENTRIES 6
-#endif
-
+/*
 int show_advanced_menu() {
   char buf[80];
   int i = 0, j = 0, chosen_item = 0;
-  /* Default number of entries if no compile-time extras are added */
   static char* list[MAX_NUM_MANAGED_VOLUMES + FIXED_ADVANCED_ENTRIES + 1];
   
   char* primary_path = get_primary_storage_path();
@@ -1678,7 +1611,7 @@ int show_advanced_menu() {
     free(list[FIXED_ADVANCED_ENTRIES + j - 1]);
   }
   return chosen_item;
-}
+}*/
 
 void write_fstab_root(char *path, FILE *file) {
   Volume *vol = volume_for_path(path);
