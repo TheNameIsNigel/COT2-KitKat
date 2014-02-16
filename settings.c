@@ -98,6 +98,12 @@ void show_cot_options_menu() {
   }
 }
 
+#ifdef ENABLE_LOKI
+#define FIXED_ADVANCED_ENTRIES 7
+#else
+#define FIXED_ADVANCED_ENTRIES 6
+#endif
+
 int show_advanced_menu() {
   char buf[80];
   int i = 0, j = 0, chosen_item = 0;
