@@ -52,6 +52,7 @@
 #include "dedupe/dedupe.h"
 #include "settings.h"
 #include "settingsparser.h"
+#include "power.h"
 #include "voldclient/voldclient.h"
 
 #include "recovery_cmds.h"
@@ -811,20 +812,14 @@ prompt_and_wait() {
             switch (chosen_item) {
                 case ITEM_REBOOT:
                     return;
+		    
+		case ITEM_APPLY_ZIP:
+                    ret = show_install_update_menu();
+                    break;
 
                 case ITEM_WIPE_DATA:
                     wipe_data(ui_text_visible());
                     if (!ui_text_visible()) return;
-                    break;
-
-                case ITEM_WIPE_CACHE:
-                    if (confirm_selection("Confirm wipe?", "Yes - Wipe Cache"))
-                    {
-                        ui_print("\n-- Wiping cache...\n");
-                        erase_volume("/cache");
-                        ui_print("Cache wipe complete.\n");
-                        if (!ui_text_visible()) return;
-                    }
                     break;
 
 		case ITEM_WIPE_ALL:
@@ -841,10 +836,6 @@ prompt_and_wait() {
 		  break;
 		}
 		
-                case ITEM_APPLY_ZIP:
-                    ret = show_install_update_menu();
-                    break;
-
                 case ITEM_NANDROID:
                     ret = show_nandroid_menu();
                     break;
@@ -854,8 +845,12 @@ prompt_and_wait() {
                     break;
 
                 case ITEM_ADVANCED:
-                    ret = show_advanced_menu();
+                    ret = show_cot_options_menu();
                     break;
+		
+		case ITEM_POWEROPTIONS:
+		    show_power_options_menu();
+		    break;
             }
             if (ret == REFRESH) {
                 ret = 0;
