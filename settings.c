@@ -104,9 +104,9 @@ void show_cot_options_menu() {
 void show_advanced_options_menu() {
 
 #ifdef ENABLE_LOKI
-#define FIXED_ADVANCED_ENTRIES 2
+#define FIXED_ADVANCED_ENTRIES 3
 #else
-#define FIXED_ADVANCED_ENTRIES 1
+#define FIXED_ADVANCED_ENTRIES 2
 #endif
   
   char buf[80];
@@ -123,8 +123,9 @@ void show_advanced_options_menu() {
   };
   
   list[0] = "Recovery Debugging";
+  list[1] = "Wipe Dalvik-Cache";
 #ifdef ENABLE_LOKI
-  list[1] = "Toggle Loki";
+  list[2] = "Toggle Loki";
 #endif
   
   char list_prefix[] = "Partition ";
@@ -157,8 +158,24 @@ void show_advanced_options_menu() {
 	show_recovery_debugging_menu();
 	break;
       }
-#ifdef ENABLE_LOKI
       case 1:
+      {
+	if (0 != ensure_path_mounted("/data"))
+	  break;
+	if (volume_for_path("/sd-ext") != NULL)
+	  ensure_path_mounted("/sd-ext");
+	ensure_path_mounted("/cache");
+	if (confirm_selction("Confirm Wipe?", "Yes - Wipe Dalvik-Cache")) {
+	  __system("rm -r /data/dalvik-cache");
+	  __system("rm -r /cache/dalvik-cache");
+	  __system("rm -r /sd-ext/dalvik-cache");
+	  ui_print("Dalvik-Cache wiped.\n");
+	}
+	ensure_path_unmounted("/data");
+	break;
+      }
+#ifdef ENABLE_LOKI
+      case 2:
       {
 	toggle_loki_support();
 	break;

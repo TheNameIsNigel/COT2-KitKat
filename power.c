@@ -45,27 +45,46 @@
 #include "power.h"
 
 void show_power_options_menu() {
-	static char* headers[] = { "Power Options",
-                                "",
-                                NULL
-    };
-
-	#define POWER_OPTIONS_ITEM_REBOOT	0
-	#define POWER_OPTIONS_ITEM_POWEROFF	1
-
-	static char* list[3];
-	list[0] = "Reboot Recovery";
-	list[1] = "Power Off";
-	list[2] = NULL;
-	for (;;) {
-		int chosen_item = get_menu_selection(headers, list, 0, 0);
-		switch (chosen_item) {
-			case GO_BACK:
-				return;
-			case POWER_OPTIONS_ITEM_REBOOT:
-				break;
-			case POWER_OPTIONS_ITEM_POWEROFF:
-				break;
-		}
+  static char* headers[] = { "Power Options",
+    "",
+    NULL
+  };
+  
+  #define POWER_OPTIONS_ITEM_REBOOT	0
+  #define POWER_OPTIONS_ITEM_BOOTLOADER	1
+  #define POWER_OPTIONS_ITEM_POWEROFF	2
+  
+  static char* list[4];
+  list[0] = "Reboot Recovery";
+  char bootloader_mode[PROPERTY_VALUE_MAX];
+  property_get("ro.bootloader.mode", bootloader_mode, "");
+  if (!strcmp(bootloader_mode, "download")) {
+    list[1] = "Download Mode";
+  } else {
+    list[1] = "Bootloader";
+  }
+  list[2] = "Power Off";
+  list[3] = NULL;
+  for (;;) {
+    int chosen_item = get_filtered_menu_selection(headers, list, 0, 0, sizeof(list) / sizeof(char*));
+    switch (chosen_item) {
+      case GO_BACK:
+	return;
+      case POWER_OPTIONS_ITEM_REBOOT:
+	ui_print("Rebooting recovery...\n");
+	reboot_main_system(ANDROID_RB_RESTART2, 0, "recovery");
+	break;
+      case POWER_OPTIONS_ITEM_BOOTLOADER:
+	if (!strcmp(bootloader_mode, "download")) {
+	  ui_print("Rebooting to download mode...\n");
+	  reboot_main_system(ANDROID_RB_RESTART2, 0, "download");
+	} else {
+	  ui_print("Rebooting to bootloader...\n");
+	  reboot_main_system(ANDROID_RB_RESTART2, 0, "bootloader");
 	}
+	break;
+      case POWER_OPTIONS_ITEM_POWEROFF:
+	break;
+    }
+  }
 }
