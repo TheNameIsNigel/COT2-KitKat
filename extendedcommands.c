@@ -200,7 +200,7 @@ int show_install_update_menu() {
   
   memset(install_menu_items, 0, MAX_NUM_MANAGED_VOLUMES + FIXED_INSTALL_ZIP_MENUS + 1);
   
-  static const char* headers[] = { "Install update from zip file", "", NULL };
+  static const char* headers[] = { "ZIP Flashing", "", NULL };
   
   // FIXED_TOP_INSTALL_ZIP_MENUS
   sprintf(buf, "choose zip from %s", primary_path);
@@ -929,7 +929,7 @@ MFMatrix get_mnt_fmt_capabilities(char *fs_type, char *mount_point) {
 }
 
 int show_partition_menu() {
-  static const char* headers[] = { "Mounts and Storage Menu", "", NULL };
+  static const char* headers[] = { "Storage Management", "", NULL };
   
   static char* confirm_format = "Confirm format?";
   static char* confirm = "Yes - Format";
@@ -1232,7 +1232,7 @@ int show_nandroid_menu() {
   char* chosen_path = NULL;
   int action_entries_num = (num_extra_volumes + 1) * NANDROID_ACTIONS_NUM;
   
-  static const char* headers[] = { "Backup and Restore", "", NULL };
+  static const char* headers[] = { "Nandroid", "", NULL };
   
   // (MAX_NUM_MANAGED_VOLUMES + 1) for primary_path (/sdcard)
   // + 1 for extra NULL entry
