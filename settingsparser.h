@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-extern char * COTSETTINGS;
+extern char * storage_path;
+extern char * settings_ini_path;
+extern char * settings_ini;
 
 void create_default_settings();
 void parse_settings();

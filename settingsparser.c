@@ -60,7 +60,11 @@
 #include "iniparser/iniparser.h"
 #include "iniparser/dictionary.h"
 
-COTSETTINGS = "/sdcard/cotrecovery/settings.ini";
+// storage_path and settings_ini_path are temporarily hardcoded since most devices will use /sdcard
+// however, always set them with set_settings_ini_path() prior to using
+storage_path = "/sdcard";
+settings_ini_path = "/sdcard/cotrecovery/settings.ini";
+settings_ini = "/cotrecovery/settings.ini";
 int fallback_settings = 0;
 
 int backupprompt = 0;
@@ -71,12 +75,12 @@ char * currenttheme;
 
 void create_default_settings(void) {
   FILE * ini;
-  if (ini = fopen_path(COTSETTINGS, "r")) {
-    fclose(COTSETTINGS);
-    remove(COTSETTINGS);
+  if (ini = fopen_path(settings_ini_path, "r")) {
+    fclose(settings_ini_path);
+    remove(settings_ini_path);
   }
   
-  ini = fopen_path(COTSETTINGS, "w");
+  ini = fopen_path(settings_ini_path, "w");
   fprintf(ini,
     ";\n"
     "; COT Settings INI\n"
@@ -103,13 +107,12 @@ void load_fallback_settings() {
 }
 
 void update_cot_settings(void) {
-  LOGI("Updating COT Settings...\n");
+  //set_settings_ini_path();
   dictionary * ini ;
   char       * ini_name ;
   FILE * ini_file;
-  ini_name = COTSETTINGS;
+  ini_name = settings_ini_path;
   ini_file = fopen_path(ini_name, "w");
-  LOGI("Loading current ini...\n");
   ini = iniparser_load(ini_name);
   if (ini==NULL) {
     LOGI("Can't load current INI!\n");
@@ -142,8 +145,15 @@ void update_cot_settings(void) {
 void parse_settings() {
   dictionary * ini ;
   char       * ini_name ;
-  ini_name = COTSETTINGS;
-  if (ensure_path_mounted("/sdcard") != 0) {
+  char * ini_end = "/cotrecovery/settings.ini";
+  char * ini_base = get_primary_storage_path();
+  char * full_ini_path = malloc(strlen(ini_base) + strlen(ini_end));
+  strcpy(full_ini_path, ini_base);
+  strcat(full_ini_path, ini_end);
+  settings_ini_path = full_ini_path;
+  ini_name = settings_ini_path;
+  LOGI("Attempting to load %s from %s\n", ini_name, ini_base);
+  if (ensure_path_mounted(get_primary_storage_path()) != 0) {
     load_fallback_settings();
     handle_theme(currenttheme);
     return;
@@ -183,6 +193,7 @@ void handle_theme(char * theme_name) {
     LOGI("Can't load theme %s!\n", full_theme_file);
     return;
   }
+  free(full_theme_file);
   LOGI("Theme %s loaded!\n", theme_name);
   
   UICOLOR0 = iniparser_getint(ini, "theme:uicolor0", NULL);
