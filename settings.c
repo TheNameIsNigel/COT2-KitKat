@@ -165,7 +165,7 @@ void show_advanced_options_menu() {
 	if (volume_for_path("/sd-ext") != NULL)
 	  ensure_path_mounted("/sd-ext");
 	ensure_path_mounted("/cache");
-	if (confirm_selction("Confirm Wipe?", "Yes - Wipe Dalvik-Cache")) {
+	if (confirm_selection("Confirm Wipe?", "Yes - Wipe Dalvik-Cache")) {
 	  __system("rm -r /data/dalvik-cache");
 	  __system("rm -r /cache/dalvik-cache");
 	  __system("rm -r /sd-ext/dalvik-cache");
