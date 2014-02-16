@@ -31,3 +31,5 @@ extern int signature_check_enabled;
 extern char* currenttheme;
 
 void update_cot_settings(void);
+
+int theme_set(char * theme);
