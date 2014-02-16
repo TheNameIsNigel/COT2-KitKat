@@ -70,3 +70,9 @@ int volume_main(int argc, char **argv);
 void extend_nandroid_menu(char** items, int item_count, int max_items);
 void handle_nandroid_menu(int item_count, int selected);
 #endif
+
+void partition_sdcard(const char* volume);
+
+#ifdef ENABLE_LOKI
+void toggle_loki_support();
+#endif

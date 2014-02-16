@@ -1399,7 +1399,7 @@ void format_sdcard(const char* volume) {
       ui_print("Done formatting %s (%s)\n", volume, list[chosen_item]);
 }
 
-static void partition_sdcard(const char* volume) {
+void partition_sdcard(const char* volume) {
   if (!can_partition(volume)) {
     ui_print("Can't partition device: %s\n", volume);
     return;

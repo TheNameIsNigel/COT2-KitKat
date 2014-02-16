@@ -91,12 +91,144 @@ void show_cot_options_menu() {
       }
       case COT_OPTIONS_ITEM_ADVANCED:
       {
-	//TODO: Add in debugging functionality
+	show_advanced_options_menu();
 	break;
       }
       case COT_OPTIONS_ITEM_SETTINGS:
 	show_settings_menu();
 	break;
+    }
+  }
+}
+
+void show_advanced_options_menu() {
+
+#ifdef ENABLE_LOKI
+#define FIXED_ADVANCED_ENTRIES 2
+#else
+#define FIXED_ADVANCED_ENTRIES 1
+#endif
+  
+  char buf[80];
+  int i = 0, j = 0, chosen_item = 0;
+  char* primary_path = get_primary_storage_path();
+  char** extra_paths = get_extra_storage_paths();
+  int num_extra_volumes = get_num_extra_volumes();
+  static char* list[MAX_NUM_MANAGED_VOLUMES + FIXED_ADVANCED_ENTRIES + 1];
+  
+  static const char* headers[] = {
+    "Advanced Options",
+    "",
+    NULL
+  };
+  
+  list[0] = "Recovery Debugging";
+#ifdef ENABLE_LOKI
+  list[1] = "Toggle Loki";
+#endif
+  
+  char list_prefix[] = "Partition ";
+  if (can_partition(primary_path)) {
+    sprintf(buf, "%s%s", list_prefix, primary_path);
+    list[FIXED_ADVANCED_ENTRIES] = strdup(buf);
+    j++;
+  }
+  
+  if (extra_paths != NULL) {
+    for (i = 0; i < num_extra_volumes; i++) {
+      if (can_partition(extra_paths[i])) {
+	sprintf(buf, "%s%s", list_prefix, extra_paths[i]);
+	list[FIXED_ADVANCED_ENTRIES + j] = strdup(buf);
+	j++;
+      }
+    }
+  }
+  list[FIXED_ADVANCED_ENTRIES + j] = NULL;
+  
+  for (;;) {
+    chosen_item = get_filtered_menu_selection(headers, list, 0, 0, sizeof(list) / sizeof(char*));
+    switch (chosen_item) {
+      case GO_BACK:
+      {
+	return;
+      }
+      case 0:
+      {
+	show_recovery_debugging_menu();
+	break;
+      }
+#ifdef ENABLE_LOKI
+      case 1:
+      {
+	toggle_loki_support();
+	break;
+      }
+#endif
+      default:
+      {
+	partition_sdcard(list[chosen_item] + strlen(list_prefix));
+	break;
+      }
+    }
+  }
+}
+
+void show_recovery_debugging_menu() {
+  static char* headers[] = { "Recovery Debugging",
+    "",
+    NULL
+  };
+  
+  static char* list[] = { "Report Error",
+    "Key Test",
+    "Show Log",
+    "Toggle UI Debugging",
+    NULL
+  };
+  
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, list, 0, 0);
+    if(chosen_item == GO_BACK)
+      break;
+    switch(chosen_item) {
+      case 0:
+      {
+	handle_failure(1);
+	break;
+      }
+      case 1:
+      {
+	ui_print("Outputting key codes.\n");
+	ui_print("Go back to end debugging.\n");
+	struct keyStruct{
+	  int code;
+	  int x;
+	  int y;
+	}*key;
+	int action;
+	do
+	{
+	  if(key->code == ABS_MT_POSITION_X) {
+	    action = device_handle_mouse(key, 1);
+	    ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
+	  } else {
+	    action = device_handle_key(key->code, 1);
+	    ui_print("Key: %x\n", key->code);
+	  }
+	}
+	while (action != GO_BACK);
+	break;
+      }
+      case 2:
+      {
+	ui_printlogtail(12);
+	break;
+      }
+      case 3:
+      {
+	toggle_ui_debugging();
+	break;
+      }
     }
   }
 }
