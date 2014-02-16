@@ -67,6 +67,40 @@ int UITHEME = 0;
 
 int UI_COLOR_DEBUG = 0;
 
+void show_cot_options_menu() {
+  static char* headers[] = {
+    "COT Options",
+    "",
+    NULL
+  };
+  
+#define COT_OPTIONS_ITEM_ADVANCED	0
+#define COT_OPTIONS_ITEM_SETTINGS	1
+  
+  static char* list[3];
+  list[0] = "Advanced Options";
+  list[1] = "COT Settings";
+  list[2] = NULL;
+  
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, list, 0, 0);
+    switch (chosen_item) {
+      case GO_BACK:
+      {
+	return;
+      }
+      case COT_OPTIONS_ITEM_ADVANCED:
+      {
+	//TODO: Add in debugging functionality
+	break;
+      }
+      case COT_OPTIONS_ITEM_SETTINGS:
+	show_settings_menu();
+	break;
+    }
+  }
+}
+
 void show_settings_menu() {
   static char* headers[] = {
     "COT Settings",
