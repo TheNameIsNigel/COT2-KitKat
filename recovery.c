@@ -52,6 +52,7 @@
 #include "dedupe/dedupe.h"
 #include "settings.h"
 #include "settingsparser.h"
+#include "power.h"
 #include "voldclient/voldclient.h"
 
 #include "recovery_cmds.h"
@@ -848,7 +849,7 @@ prompt_and_wait() {
                     break;
 		    
 		case ITEM_POWEROPTIONS:
-		    //ret = show_power_options_menu();
+		    show_power_options_menu();
 		    break;
             }
             if (ret == REFRESH) {

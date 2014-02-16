@@ -23,6 +23,7 @@ LOCAL_SRC_FILES := \
     prop.c \
     settingsparser.c \
     settings.c \
+    power.c \
     default_recovery_ui.c \
     adb_install.c \
     verifier.c \
