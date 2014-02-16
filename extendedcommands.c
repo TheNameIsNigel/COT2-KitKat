@@ -929,7 +929,7 @@ MFMatrix get_mnt_fmt_capabilities(char *fs_type, char *mount_point) {
 }
 
 int show_partition_menu() {
-  static const char* headers[] = { "Storage Management", "", NULL };
+  static const char* headers[] = { "Mounts and Storage Menu", "", NULL };
   
   static char* confirm_format = "Confirm format?";
   static char* confirm = "Yes - Format";
@@ -964,13 +964,13 @@ int show_partition_menu() {
     MFMatrix mfm = get_mnt_fmt_capabilities(v->fs_type, v->mount_point);
     
     if (mfm.can_mount) {
-      sprintf(mount_menu[mountable_volumes].mount, "Mount %s", v->mount_point);
-      sprintf(mount_menu[mountable_volumes].unmount, "Unmount %s", v->mount_point);
+      sprintf(mount_menu[mountable_volumes].mount, "mount %s", v->mount_point);
+      sprintf(mount_menu[mountable_volumes].unmount, "unmount %s", v->mount_point);
       sprintf(mount_menu[mountable_volumes].path, "%s", v->mount_point);
       ++mountable_volumes;
     }
     if (mfm.can_format) {
-      sprintf(format_menu[formatable_volumes].txt, "Format %s", v->mount_point);
+      sprintf(format_menu[formatable_volumes].txt, "format %s", v->mount_point);
       sprintf(format_menu[formatable_volumes].path, "%s", v->mount_point);
       sprintf(format_menu[formatable_volumes].type, "%s", v->fs_type);
       ++formatable_volumes;
@@ -992,11 +992,11 @@ int show_partition_menu() {
     }
     
     if (!is_data_media()) {
-      list[mountable_volumes + formatable_volumes] = "Mount USB Storage";
+      list[mountable_volumes + formatable_volumes] = "mount USB storage";
       list[mountable_volumes + formatable_volumes + 1] = '\0';
     } else {
-      list[mountable_volumes + formatable_volumes] = "Format /data and /data/media (/sdcard)";
-      list[mountable_volumes + formatable_volumes + 1] = "Mount USB Storage";
+      list[mountable_volumes + formatable_volumes] = "format /data and /data/media (/sdcard)";
+      list[mountable_volumes + formatable_volumes + 1] = "mount USB storage";
       list[mountable_volumes + formatable_volumes + 2] = '\0';
     }
     
@@ -1007,7 +1007,7 @@ int show_partition_menu() {
       if (!is_data_media()) {
 	show_mount_usb_storage_menu();
       } else {
-	if (!confirm_selection("Format /data and /data/media (/sdcard)", confirm))
+	if (!confirm_selection("format /data and /data/media (/sdcard)", confirm))
 	  continue;
 	ignore_data_media_workaround(1);
 	ui_print("Formatting /data...\n");
