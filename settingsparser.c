@@ -61,7 +61,7 @@
 #include "iniparser/dictionary.h"
 
 // storage_path and settings_ini_path are temporarily hardcoded since most devices will use /sdcard
-// however, always set them with set_settings_ini_path() prior to using
+// however, they get set properly in parse_settings()
 storage_path = "/sdcard";
 settings_ini_path = "/sdcard/cotrecovery/settings.ini";
 settings_ini = "/cotrecovery/settings.ini";
