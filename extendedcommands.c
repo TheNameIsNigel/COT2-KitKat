@@ -1496,6 +1496,190 @@ int can_partition(const char* volume) {
   return 1;
 }
 
+void show_advanced_debugging_menu() {
+  static char* headers[] = { "Debugging Options",
+    "",
+    NULL
+  };
+  
+  static char* list[] = { "Report Error",
+    "Key Test",
+    "Show Log",
+    "Toggle UI Debugging",
+    NULL
+  };
+  
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, list, 0, 0);
+    if(chosen_item == GO_BACK)
+      break;
+    switch(chosen_item) {
+      case 0:
+      {
+	handle_failure(1);
+	break;
+      }
+      case 1:
+      {
+	ui_print("Outputting key codes.\n");
+	ui_print("Go back to end debugging.\n");
+	struct keyStruct{
+	  int code;
+	  int x;
+	  int y;
+	}*key;
+	int action;
+	do
+	{
+	  if(key->code == ABS_MT_POSITION_X) {
+	    action = device_handle_mouse(key, 1);
+	    ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
+	  } else {
+	    action = device_handle_key(key->code, 1);
+	    ui_print("Key: %x\n", key->code);
+	  }
+	}
+	while (action != GO_BACK);
+	break;
+      }
+      case 2:
+      {
+	ui_printlogtail(12);
+	break;
+      }
+      case 3:
+      {
+	toggle_ui_debugging();
+	break;
+      }
+    }
+  }
+}
+
+
+#ifdef ENABLE_LOKI
+#define FIXED_ADVANCED_ENTRIES 7
+#else
+#define FIXED_ADVANCED_ENTRIES 6
+#endif
+
+int show_advanced_menu() {
+  char buf[80];
+  int i = 0, j = 0, chosen_item = 0;
+  /* Default number of entries if no compile-time extras are added */
+  static char* list[MAX_NUM_MANAGED_VOLUMES + FIXED_ADVANCED_ENTRIES + 1];
+  
+  char* primary_path = get_primary_storage_path();
+  char** extra_paths = get_extra_storage_paths();
+  int num_extra_volumes = get_num_extra_volumes();
+  
+  static const char* headers[] = { "Advanced Menu", "", NULL };
+  
+  memset(list, 0, MAX_NUM_MANAGED_VOLUMES + FIXED_ADVANCED_ENTRIES + 1);
+  
+  list[0] = "Reboot Recovery";
+  
+  char bootloader_mode[PROPERTY_VALUE_MAX];
+  property_get("ro.bootloader.mode", bootloader_mode, "");
+  if (!strcmp(bootloader_mode, "download")) {
+    list[1] = "Reboot to download mode";
+  } else {
+    list[1] = "Reboot to bootloader";
+  }
+  
+  list[2] = "Power Off";
+  list[3] = "Wipe Dalvik Cache";
+  list[4] = "COT Settings";
+  list[5] = "Debugging Options";
+  #ifdef ENABLE_LOKI
+  list[6] = "Toggle Loki Support";
+  #endif
+  
+  char list_prefix[] = "Partition ";
+  if (can_partition(primary_path)) {
+    sprintf(buf, "%s%s", list_prefix, primary_path);
+    list[FIXED_ADVANCED_ENTRIES] = strdup(buf);
+    j++;
+  }
+  
+  if (extra_paths != NULL) {
+    for (i = 0; i < num_extra_volumes; i++) {
+      if (can_partition(extra_paths[i])) {
+	sprintf(buf, "%s%s", list_prefix, extra_paths[i]);
+	list[FIXED_ADVANCED_ENTRIES + j] = strdup(buf);
+	j++;
+      }
+    }
+  }
+  list[FIXED_ADVANCED_ENTRIES + j] = NULL;
+  
+  for (;;) {
+    chosen_item = get_filtered_menu_selection(headers, list, 0, 0, sizeof(list) / sizeof(char*));
+    if (chosen_item == GO_BACK || chosen_item == REFRESH)
+      break;
+    switch (chosen_item) {
+      case 0: {
+	ui_print("Rebooting recovery...\n");
+	reboot_main_system(ANDROID_RB_RESTART2, 0, "recovery");
+	break;
+      }
+      case 1: {
+	if (!strcmp(bootloader_mode, "download")) {
+	  ui_print("Rebooting to download mode...\n");
+	  reboot_main_system(ANDROID_RB_RESTART2, 0, "download");
+	} else {
+	  ui_print("Rebooting to bootloader...\n");
+	  reboot_main_system(ANDROID_RB_RESTART2, 0, "bootloader");
+	}
+	break;
+      }
+      case 2: {
+	ui_print("Shutting down...\n");
+	reboot_main_system(ANDROID_RB_POWEROFF, 0, 0);
+	break;
+      }
+      case 3: {
+	if (0 != ensure_path_mounted("/data"))
+	  break;
+	if (volume_for_path("/sd-ext") != NULL)
+	  ensure_path_mounted("/sd-ext");
+	ensure_path_mounted("/cache");
+	if (confirm_selection("Confirm wipe?", "Yes - Wipe Dalvik Cache")) {
+	  __system("rm -r /data/dalvik-cache");
+	  __system("rm -r /cache/dalvik-cache");
+	  __system("rm -r /sd-ext/dalvik-cache");
+	  ui_print("Dalvik Cache wiped.\n");
+	}
+	ensure_path_unmounted("/data");
+	break;
+      }
+      case 4:
+      {
+	show_settings_menu();
+	break;
+      }
+      case 5:
+      {
+	show_advanced_debugging_menu();
+	break;
+      }
+      #ifdef ENABLE_LOKI
+      case 6:
+	toggle_loki_support();
+	break;
+	#endif
+      default:
+	partition_sdcard(list[chosen_item] + strlen(list_prefix));
+	break;
+    }
+  }
+  
+  for (; j > 0; --j) {
+    free(list[FIXED_ADVANCED_ENTRIES + j - 1]);
+  }
+  return chosen_item;
+}
+
 void write_fstab_root(char *path, FILE *file) {
   Volume *vol = volume_for_path(path);
   if (vol == NULL) {
