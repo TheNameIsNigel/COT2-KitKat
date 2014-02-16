@@ -81,6 +81,7 @@ int settheme_main(int argc, char *argv[])
     }
 
     //TODO: Add error checking
+    //TODO: This also segfaults...
     theme_set(argv[1]);
     return 0;
 }
