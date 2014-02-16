@@ -817,16 +817,6 @@ prompt_and_wait() {
                     if (!ui_text_visible()) return;
                     break;
 
-                case ITEM_WIPE_CACHE:
-                    if (confirm_selection("Confirm wipe?", "Yes - Wipe Cache"))
-                    {
-                        ui_print("\n-- Wiping cache...\n");
-                        erase_volume("/cache");
-                        ui_print("Cache wipe complete.\n");
-                        if (!ui_text_visible()) return;
-                    }
-                    break;
-
 		case ITEM_WIPE_ALL:
 		{
 		  if (confirm_selection("Confirm wipe all?", "Yes - Wipe All"))
@@ -856,6 +846,10 @@ prompt_and_wait() {
                 case ITEM_ADVANCED:
                     ret = show_advanced_menu();
                     break;
+		    
+		case ITEM_POWEROPTIONS:
+		    //ret = show_power_options_menu();
+		    break;
             }
             if (ret == REFRESH) {
                 ret = 0;
