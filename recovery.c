@@ -432,7 +432,7 @@ erase_volume(const char *volume) {
         tmplog_offset = 0;
         copy_logs();
     }
-
+    ui_dyn_background();
     return result;
 }
 

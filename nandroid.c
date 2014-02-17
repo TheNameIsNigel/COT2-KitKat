@@ -42,7 +42,7 @@
 #include "flashutils/flashutils.h"
 #include <libgen.h>
 
-#define LIMITED_SPACE 10000
+#define LIMITED_SPACE 100
 
 void nandroid_generate_timestamp_path(char* backup_path) {
     time_t t = time(NULL);
