@@ -19,9 +19,6 @@ int
 show_nandroid_menu();
 
 int
-show_partition_menu();
-
-int
 install_zip(const char* packagefilepath);
 
 int
@@ -29,10 +26,6 @@ __system(const char *command);
 
 int
 show_advanced_menu();
-
-int format_device(const char *device, const char *path, const char *fs_type);
-
-int format_unknown_device(const char *device, const char* path, const char *fs_type);
 
 void create_fstab();
 
@@ -62,7 +55,7 @@ void free_string_array(char** array);
 
 int can_partition(const char* volume);
 
-static int is_path_mounted(const char* path);
+int is_path_mounted(const char* path);
 
 int volume_main(int argc, char **argv);
 

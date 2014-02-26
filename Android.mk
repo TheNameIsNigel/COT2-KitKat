@@ -13,8 +13,8 @@ LOCAL_SRC_FILES := \
     roots.c \
     ui.c \
     mounts.c \
-    eraseandformat.c \
     extendedcommands.c \
+    eraseandformat.c \
     nandroid.c \
     reboot.c \
     ../../system/core/toolbox/dynarray.c \

@@ -59,6 +59,7 @@
 
 #include "settings.h"
 #include "settingsparser.h"
+#include "eraseandformat.h"
 
 int UICOLOR0 = 0;
 int UICOLOR1 = 0;

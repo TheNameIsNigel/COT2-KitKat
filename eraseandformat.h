@@ -13,3 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
+int erase_volume(const char *volume);
+
+void wipe_data(int confirm);
+
+void erase_cache();
+
+void erase_dalvik_cache();
+
+void wipe_all();
+
+int format_device(const char *device, const char *path, const char *fs_type);
+
+int format_unknown_device(const char *device, const char* path, const char *fs_type);
+
+int show_partition_menu();
+
+void format_sdcard(const char* volume);

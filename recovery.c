@@ -49,6 +49,7 @@
 #include "firmware.h"
 #include "extendedcommands.h"
 #include "flashutils/flashutils.h"
+#include "eraseandformat.h"
 #include "dedupe/dedupe.h"
 #include "settings.h"
 #include "settingsparser.h"
@@ -299,8 +300,7 @@ rotate_last_logs(int max) {
     }
 }
 
-static void
-copy_logs() {
+void copy_logs() {
     // Copy logs to cache so the system can find out what happened.
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
     copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
@@ -351,90 +351,6 @@ typedef struct _saved_log_file {
     unsigned char* data;
     struct _saved_log_file* next;
 } saved_log_file;
-
-static int
-erase_volume(const char *volume) {
-    bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
-
-    ui_set_background(BACKGROUND_ICON_INSTALLING);
-    ui_show_indeterminate_progress();
-
-    saved_log_file* head = NULL;
-
-    if (is_cache) {
-        // If we're reformatting /cache, we load any
-        // "/cache/recovery/last*" files into memory, so we can restore
-        // them after the reformat.
-
-        ensure_path_mounted(volume);
-
-        DIR* d;
-        struct dirent* de;
-        d = opendir(CACHE_LOG_DIR);
-        if (d) {
-            char path[PATH_MAX];
-            strcpy(path, CACHE_LOG_DIR);
-            strcat(path, "/");
-            int path_len = strlen(path);
-            while ((de = readdir(d)) != NULL) {
-                if (strncmp(de->d_name, "last", 4) == 0) {
-                    saved_log_file* p = (saved_log_file*) malloc(sizeof(saved_log_file));
-                    strcpy(path+path_len, de->d_name);
-                    p->name = strdup(path);
-                    if (stat(path, &(p->st)) == 0) {
-                        // truncate files to 512kb
-                        if (p->st.st_size > (1 << 19)) {
-                            p->st.st_size = 1 << 19;
-                        }
-                        p->data = (unsigned char*) malloc(p->st.st_size);
-                        FILE* f = fopen(path, "rb");
-                        fread(p->data, 1, p->st.st_size, f);
-                        fclose(f);
-                        p->next = head;
-                        head = p;
-                    } else {
-                        free(p);
-                    }
-                }
-            }
-            closedir(d);
-        } else {
-            if (errno != ENOENT) {
-                printf("opendir failed: %s\n", strerror(errno));
-            }
-        }
-    }
-
-    ui_print("Formatting %s...\n", volume);
-
-    ensure_path_unmounted(volume);
-    int result = format_volume(volume);
-
-    if (is_cache) {
-        while (head) {
-            FILE* f = fopen_path(head->name, "wb");
-            if (f) {
-                fwrite(head->data, 1, head->st.st_size, f);
-                fclose(f);
-                chmod(head->name, head->st.st_mode);
-                chown(head->name, head->st.st_uid, head->st.st_gid);
-            }
-            free(head->name);
-            free(head->data);
-            saved_log_file* temp = head->next;
-            free(head);
-            head = temp;
-        }
-
-        // Any part of the log we'd copied to cache is now gone.
-        // Reset the pointer so we copy from the beginning of the temp
-        // log.
-        tmplog_offset = 0;
-        copy_logs();
-    }
-    ui_dyn_background();
-    return result;
-}
 
 static char*
 copy_sideloaded_package(const char* original_path) {
@@ -752,23 +668,6 @@ update_directory(const char* path, const char* unmount_when_done) {
         ensure_path_unmounted(unmount_when_done);
     }
     return result;
-}
-
-static void
-wipe_data(int confirm) {
-    if (confirm && !confirm_selection( "Confirm wipe of all user data?", "Yes - Wipe all user data"))
-        return;
-
-    ui_print("\n-- Wiping data...\n");
-    device_wipe_data();
-    erase_volume("/data");
-    erase_volume("/cache");
-    if (has_datadata()) {
-        erase_volume("/datadata");
-    }
-    erase_volume("/sd-ext");
-    erase_volume(get_android_secure_path());
-    ui_print("Data wipe complete.\n");
 }
 
 static void headless_wait() {
