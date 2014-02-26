@@ -450,47 +450,15 @@ void show_choose_zip_menu(const char *mount_point) {
   char* file = choose_file_menu(mount_point, ".zip", headers);
   if (file == NULL)
     return;
+  static char* confirm_install = "Confirm install?";
+  static char confirm[PATH_MAX];
+  sprintf(confirm, "Yes - Install %s", basename(file));
   
-  if (backupprompt == 0) {
-    static char* confirm_install = "Confirm install?";
-    static char confirm[PATH_MAX];
-    sprintf(confirm, "Yes - Install %s", basename(file));
-  
-    if (confirm_selection(confirm_install, confirm)) {
-      install_zip(file);
-      write_last_install_path(dirname(file));
-    }
-  } else {
-    for (;;) {
-      int chosen_item = get_menu_selection(headers, INSTALL_OR_BACKUP_ITEMS, 0, 0);
-      switch(chosen_item) {
-	case ITEM_BACKUP_AND_INSTALL:
-	{
-	  char backup_path[PATH_MAX];
-	  time_t t = time(NULL);
-	  struct tm *tmp = localtime(&t);
-	  if (tmp == NULL) {
-	    struct timeval tp;
-	    gettimeofday(&tp, NULL);
-	    sprintf(backup_path, "%s/clockworkmod/backup/%d", get_primary_storage_path(), tp.tv_sec);
-	  } else {
-	    strftime(backup_path, sizeof(backup_path, "%s/clockworkmod/backup/%F.%H.%M.%S", get_primary_storage_path(), tmp);
-	  }
-	  nandroid_backup(backup_path);
-	  install_zip(file);
-	  free(file);
-	  return;
-	}
-	case ITEM_INSTALL_WOUT_BACKUP:
-	  install_zip(file);
-	  free(file);
-	  return;
-	default:
-	  break;
-      }
-      break;
-    }
+  if (confirm_selection(confirm_install, confirm)) {
+    install_zip(file);
+    write_last_install_path(dirname(file));
   }
+  
   free(file);
 }
 
