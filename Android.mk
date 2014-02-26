@@ -13,6 +13,7 @@ LOCAL_SRC_FILES := \
     roots.c \
     ui.c \
     mounts.c \
+    eraseandformat.c \
     extendedcommands.c \
     nandroid.c \
     reboot.c \
