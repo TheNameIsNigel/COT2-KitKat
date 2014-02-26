@@ -29,22 +29,8 @@ int TOUCH_CONTROL_DEBUG = 0;
 #define MENU_MAX_HEIGHT 80
 
 // Device specific boundaries for touch recognition
-/*
- * WARNING
- * these might not be the same as resX, resY (from below)
- * these have to be found by setting them to zero and then in debug mode
- * check the values returned by on screen touch output by click on the
- * touch panel extremities
- */
-int maxX = 1272;	// set to 0 for debugging
-int maxY = 2104;	// set to 0 for debugging
-
-/*
- * the values of following two variables are dependent on specifc device resolution
- * and can be obtained using the outputs of the gr_fb functions
- */
-int resX = 800;
-int resY = 1200;
+#define resX gr_fb_width()
+#define resY gr_fb_height()
 
 /* Set the following value to restrict the touch boundaries so that
  * only the buttons are active instead of the full screen; set to 0
@@ -133,15 +119,21 @@ int get_menu_icon_info(int indx1, int indx2) {
 }
 
 //For those devices which has skewed X axis and Y axis detection limit (Not similar to XY resolution of device), So need normalization
-int MT_X(int x)
+int MT_X(int fd, int x)
 {
+  int abs_store[6] = {0};
+  ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), abs_store);
+  int maxX = abs_store[2];
   int out;
   out = maxX ? (x*gr_fb_width()/maxX) : x;		
   return out;
 }
 
-int MT_Y(int y)
+int MT_Y(int fd, int y)
 {
+  int abs_store[6] = {0};
+  ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), abs_store);
+  int maxY = abs_store[2];
   int out;
   out = maxY ? (y*gr_fb_height()/maxY) : y;		
   return out;

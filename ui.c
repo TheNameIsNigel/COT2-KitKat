@@ -36,6 +36,9 @@
 #define ABS_MT_TRACKING_ID 0x39  /* Center Y ellipse position */
 #endif
 
+#define resX gr_fb_width()
+#define resY gr_fb_height()
+
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -619,9 +622,9 @@ static int input_callback(int fd, short revents, void *data)
   } else if (ev.type == EV_ABS) {
     // multitouch records are sent as ABS events. Well at least on the SGS-i9000
     if (ev.code == ABS_MT_POSITION_X) {
-      actPos.x = MT_X(ev.value);
+      actPos.x = MT_X(fd, ev.value);
     } else if (ev.code == ABS_MT_POSITION_Y) {
-      actPos.y = MT_Y(ev.value);
+      actPos.y = MT_Y(fd, ev.value);
     } else if (ev.code == ABS_MT_TOUCH_MAJOR) {
       actPos.pressure = ev.value; // on SGS-i9000 this is 0 for not-pressed and 40 for pressed
     } else if (ev.code == ABS_MT_WIDTH_MAJOR) {
