@@ -24,8 +24,6 @@ LOCAL_SRC_FILES := \
     prop.c \
     settingsparser.c \
     settings.c \
-    power.c \
-    default_recovery_ui.c \
     adb_install.c \
     verifier.c \
     iniparser/iniparser.c \
@@ -96,6 +94,18 @@ ifeq ($(BOARD_CUSTOM_RECOVERY_KEYMAPPING),)
   LOCAL_SRC_FILES += default_recovery_keys.c
 else
   LOCAL_SRC_FILES += $(BOARD_CUSTOM_RECOVERY_KEYMAPPING)
+endif
+
+ifeq ($(BOARD_CUSTOM_RECOVERY_UI),)
+  LOCAL_SRC_FILES += default_recovery_ui.c
+else
+  LOCAL_SRC_FILES += $(BOARD_CUSTOM_RECOVERY_UI)
+endif
+
+ifeq ($(BOARD_CUSTOM_RECOVERY_POWER_PROFILE),)
+  LOCAL_SRC_FILES += power.c
+else
+  LOCAL_SRC_FILES += $(BOARD_CUSTOM_RECOVERY_POWER_PROFILE)
 endif
 
 LOCAL_STATIC_LIBRARIES += libvoldclient libsdcard libminipigz libfsck_msdos
