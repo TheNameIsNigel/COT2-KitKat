@@ -177,8 +177,13 @@ void wipe_data(int confirm) {
     ui_print("Data wipe complete.\n");
 }
 
-void erase_cache() {
-  if (!confirm_selection("Confirm wipe?", "Yes - Wipe Cache")) {
+void erase_cache(int orscallback) {
+  if (orscallback) {
+    if (orswipeprompt && !confirm_selection("Confirm wipe?", "Yes - Wipe Cache")) {
+      ui_print("Skipping cache wipe...\n");
+      return;
+    }
+  } else if (!confirm_selection("Confirm wipe?", "Yes - Wipe Cache")) {
     return;
   }
   ui_print("\n-- Wiping cache...\n");
@@ -188,13 +193,19 @@ void erase_cache() {
   return;
 }
 
-void erase_dalvik_cache() {
+void erase_dalvik_cache(int orscallback) {
+  if (orscallback) {
+    if (orswipeprompt && !confirm_selection("Confirm wipe?", "Yes - Wipe Dalvik Cache")) {
+      ui_print("Skipping dalvik cache wipe...\n");
+      return;
+    }
+  } else if (!confirm_selection("Confirm wipe?", "Yes - Wipe Dalvik Cache")) {
+    return;
+  }
   if (0 != ensure_path_mounted("/data"))
     return;
   ensure_path_mounted("/sd-ext");
   ensure_path_mounted("/cache");
-  if (!confirm_selection("Confirm wipe?", "Yes - Wipe Dalvik Cache"))
-    return;
   __system("rm -r /data/dalvik-cache");
   __system("rm -r /cache/dalvik-cache");
   __system("rm -r /sd-ext/dalvik-cache");
@@ -203,9 +214,15 @@ void erase_dalvik_cache() {
   return;
 }
 
-void wipe_all() {
-  if (!confirm_selection("Confirm wipe all?", "Yes - Wipe All"))
+void wipe_all(int orscallback) {
+  if (orscallback) {
+    if (orswipeprompt && !confirm_selection("Confirm wipe all?", "Yes - Wipe All")) {
+      ui_print("Skipping full wipe...\n");
+      return;
+    }
+  } else if (!confirm_selection("Confirm wipe all?", "Yes - Wipe All")) {
     return;
+  }
   ui_print("\n-- Wiping system, data, cache...\n");
   erase_volume("/system");
   erase_volume("/data");
