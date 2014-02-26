@@ -467,15 +467,7 @@ void show_choose_zip_menu(const char *mount_point) {
 	case ITEM_BACKUP_AND_INSTALL:
 	{
 	  char backup_path[PATH_MAX];
-	  time_t t = time(NULL);
-	  struct tm *tmp = localtime(&t);
-	  if (tmp == NULL) {
-	    struct timeval tp;
-	    gettimeofday(&tp, NULL);
-	    sprintf(backup_path, "%s/clockworkmod/backup/%d", get_primary_storage_path(), tp.tv_sec);
-	  } else {
-	    strftime(backup_path, sizeof(backup_path, "%s/clockworkmod/backup/%F.%H.%M.%S", get_primary_storage_path(), tmp);
-	  }
+	  nandroid_generate_timestamp_path(backup_path);
 	  nandroid_backup(backup_path);
 	  install_zip(file);
 	  free(file);

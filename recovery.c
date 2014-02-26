@@ -812,9 +812,9 @@ int run_script_file(void) {
   
   if (fp != NULL) {
     for (i = 20; i > 0; i--) {
-      ui_print("Waiting for SD Card to mount (%ds)\n", i);
-      if (ensure_path_mounted(SDCARD_ROOT) ==0) {
-	ui_print("SD Card Mounted...\nContinuing...\n");
+      ui_print("Waiting for storage to mount (%ds)\n", i);
+      if (ensure_path_mounted(get_primary_storage_path()) ==0) {
+	ui_print("Storage Mounted...\nContinuing...\n");
 	break;
       }
       sleep(1);
@@ -853,7 +853,7 @@ int run_script_file(void) {
       }
       if (strcmp(command, "install") == 0) {
 	// Install zip -- ToDo : Need to clean this shit up, it's redundant and I know it can be written better
-	ensure_path_mounted(SDCARD_ROOT);
+	ensure_path_mounted(get_primary_storage_path());
 	ui_print("Installing zip file '%s'\n", value);
 	ret_val = install_zip(value);
 	if (ret_val != INSTALL_SUCCESS) {
@@ -898,8 +898,7 @@ int run_script_file(void) {
 	    remove_nl = 0;
 	  strncpy(value2, tok, line_len - remove_nl);
 	  ui_print("Backup folder set to '%s'\n", value2);
-	  nandroid_get_backup_path(backup_path);
-	  strcat(backup_path, value2);
+	  sprintf(backup_path, "/sdcard/clockworkmod/backup/%s", value2);
 	} else {
 	  nandroid_generate_timestamp_path(backup_path);
 	}
