@@ -259,7 +259,7 @@ set_sdcard_update_bootloader_message() {
 }
 
 // How much of the temp log we have copied to the copy in cache.
-static long tmplog_offset = 0;
+long tmplog_offset = 0;
 
 static void
 copy_log_file(const char* source, const char* destination, int append) {
@@ -526,8 +526,7 @@ copy_sideloaded_package(const char* original_path) {
   return strdup(copy_path);
 }
 
-static const char**
-prepend_title(const char** headers) {
+char** prepend_title(const char** headers) {
     const char* title[] = { EXPAND(RECOVERY_VERSION),
                       "",
                       NULL };

@@ -71,6 +71,9 @@ void ui_end_menu();
 int ui_get_showing_back_button();
 void ui_set_showing_back_button(int showBackButton);
 
+extern char** prepend_title(const char** headers);
+extern long tmplog_offset;
+
 void ui_set_log_stdout(int enabled);
 int ui_should_log_stdout();
 
