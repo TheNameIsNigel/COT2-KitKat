@@ -998,8 +998,8 @@ int run_script_file(void) {
 	} else {
 	  LOGE("No value given for cmd\n");
 	}
-      } else if (strcmp(command, "print") == 0 {
-	ui_print(value);
+      } else if (strcmp(command, "print") == 0) {
+	ui_print("%s", value);
       } else {
 	LOGE("Unrecognized script command: '%s'\n", command);
 	ret_val = 1;
