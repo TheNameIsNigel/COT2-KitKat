@@ -32,7 +32,8 @@ LOCAL_SRC_FILES := \
     verifier.c \
     iniparser/iniparser.c \
     iniparser/dictionary.c \
-    ../../system/vold/vdc.c
+    ../../system/vold/vdc.c \
+    propsrvc/legacy_property_service.c
 
 ADDITIONAL_RECOVERY_FILES := $(shell echo $$ADDITIONAL_RECOVERY_FILES)
 LOCAL_SRC_FILES += $(ADDITIONAL_RECOVERY_FILES)
