@@ -824,8 +824,18 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
 
     int ret;
 
-    if (restore_boot && NULL != volume_for_path("/boot") && 0 != (ret = nandroid_restore_partition(backup_path, "/boot")))
-        return ret;
+	struct stat st;
+	sprintf(tmp, %s/boot.img", backup_path);
+	
+	if (restore_boot && (stat(tmp, &st) == 0)) {
+		// only restore boot.img if specifically requested to do so
+		if (NULL != volume_for_path("/boot") && 0 != (ret = nandroid_restore_partition(backup_path, "/boot"))) {
+			return ret;
+		}
+	} else {
+		// we didn't request to restore boot.img, so move along
+		ui_print("No boot image present, skipping...\n");
+	}
 
     struct stat s;
     Volume *vol = volume_for_path("/wimax");
