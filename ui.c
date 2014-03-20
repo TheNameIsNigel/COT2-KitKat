@@ -112,7 +112,7 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
   { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
   { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
   { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_KEYLIMEPIE],  "icon_keylimepie" },
+  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
   { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
   { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
   { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
@@ -128,7 +128,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
   { &gMenuIcon[MENU_SELECT_M],	"icon_selectM" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
-  { &gBackground,                "stitch" },
   { NULL,                             NULL },
 };
 
@@ -137,7 +136,7 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_BLOODRED[
   { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
   { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
   { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_KEYLIMEPIE],  "icon_keylimepie" },
+  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
   { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
   { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
   { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
@@ -153,16 +152,15 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_BLOODRED[
   { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_br" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
-  { &gBackground,                "stitch" },
   { NULL,                             NULL },
 };
 
-static const struct { gr_surface* surface; const char *name; } BITMAPS_KEYLIME[] = {
+static const struct { gr_surface* surface; const char *name; } BITMAPS_LLOYD[] = {
   { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
   { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
   { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
   { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_KEYLIMEPIE],  "icon_keylimepie" },
+  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
   { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
   { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
   { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
@@ -178,7 +176,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_KEYLIME[]
   { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_kl" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
-  { &gBackground,                "stitch" },
   { NULL,                             NULL },
 };
 
@@ -187,7 +184,7 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_ORANGE[] 
   { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
   { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
   { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_KEYLIMEPIE],  "icon_keylimepie" },
+  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
   { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
   { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
   { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
@@ -203,7 +200,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_ORANGE[] 
   { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_co" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
-  { &gBackground,                "stitch" },
   { NULL,                             NULL },
 };
 
@@ -212,7 +208,7 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_DOODERBUT
   { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
   { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
   { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_KEYLIMEPIE],  "icon_keylimepie" },
+  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
   { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
   { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
   { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
@@ -228,7 +224,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS_DOODERBUT
   { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_db" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
-  { &gBackground,                "stitch" },
   { NULL,                             NULL },
 };
 
@@ -847,9 +842,9 @@ void ui_init_icons(void) {
 	result = res_create_surface(BITMAPS_BLOODRED[i].name, BITMAPS_BLOODRED[i].surface);
       }
       break;
-    case KEY_LIME_PIE_UI:
-      for (i = 0; BITMAPS_KEYLIME[i].name != NULL; ++i) {
-	result = res_create_surface(BITMAPS_KEYLIME[i].name, BITMAPS_KEYLIME[i].surface);
+    case LLOYD_UI:
+      for (i = 0; BITMAPS_LLOYD[i].name != NULL; ++i) {
+	result = res_create_surface(BITMAPS_LLOYD[i].name, BITMAPS_LLOYD[i].surface);
       }
       break;
     case CITRUS_ORANGE_UI:

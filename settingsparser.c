@@ -63,8 +63,8 @@
 // storage_path and settings_ini_path are temporarily hardcoded since most devices will use /sdcard
 // however, they get set properly in parse_settings()
 storage_path = "/sdcard";
-settings_ini_path = "/sdcard/clockworkmod/settings.ini";
-settings_ini = "/clockworkmod/settings.ini";
+settings_ini_path = "/sdcard/cotrecovery/settings.ini";
+settings_ini = "/cotrecovery/settings.ini";
 int fallback_settings = 0;
 
 int backupprompt = 0;
