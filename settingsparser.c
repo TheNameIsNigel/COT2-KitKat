@@ -113,6 +113,19 @@ void create_default_settings(void) {
     "signaturecheckenabled = 1s ;\n"
     "\n");
   fclose(ini);
+  show_welcome_text();
+}
+
+void show_welcome_text() {
+	ui_print("Welcome to Cannibal Open Touch v3.0!\n");
+	ui_print("====================================\n");
+	ui_print("\n");
+	ui_print("Cannibal Open Touch was made possible\n");
+    ui_print("by the work of many smart individuals\n");
+    ui_print("working many long hours to bring you\n");
+    ui_print("the best Android recovery experience\n");
+    ui_print("ever!\n");
+    ui_print("\n");
 }
 
 void load_fallback_settings() {
@@ -178,7 +191,6 @@ void parse_settings() {
   }
   ini = iniparser_load(ini_name);
   if (ini==NULL) {
-    ui_print("Can't load COT settings!\nSetting defaults...\n");
     create_default_settings();
     ini = iniparser_load(ini_name);
   }
