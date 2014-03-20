@@ -825,7 +825,7 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
     int ret;
 
 	struct stat st;
-	sprintf(tmp, %s/boot.img", backup_path);
+	sprintf(tmp, "%s/boot.img", backup_path);
 	
 	if (restore_boot && (stat(tmp, &st) == 0)) {
 		// only restore boot.img if specifically requested to do so
