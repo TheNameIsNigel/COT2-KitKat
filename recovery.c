@@ -476,16 +476,10 @@ get_menu_selection(const char** headers, char** items, int menu_only,
     int wrap_count = 0;
 
     while (chosen_item < 0 && chosen_item != GO_BACK) {
-        struct keyStruct *key;
-	key = ui_wait_key();
+		int key = ui_wait_key();
         int visible = ui_text_visible();
 
-        int action;
-	if (key->code == ABS_MT_POSITION_X) {
-	  action = device_handle_mouse(key, visible);
-	} else {
-	  action = device_handle_key(key->code, visible);
-	}
+        int action = device_handle_key(key, visible);
 
         int old_selected = selected;
         selected = ui_get_selected_item();
@@ -1306,6 +1300,7 @@ main(int argc, char **argv) {
         }
         parse_settings();
         if (first_boot == 1) {
+			clear_screen();
 			show_welcome_text();
 		}
         if (check_for_script_file()) run_script_file();

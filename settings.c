@@ -218,21 +218,13 @@ void show_recovery_debugging_menu() {
       {
 	ui_print("Outputting key codes.\n");
 	ui_print("Go back to end debugging.\n");
-	struct keyStruct{
-	  int code;
-	  int x;
-	  int y;
-	}*key;
+	int key;
 	int action;
 	do
 	{
-	  if(key->code == ABS_MT_POSITION_X) {
-	    action = device_handle_mouse(key, 1);
-	    ui_print("Touch: X: %d\tY: %d\n", key->x, key->y);
-	  } else {
-	    action = device_handle_key(key->code, 1);
-	    ui_print("Key: %x\n", key->code);
-	  }
+		key = ui_wait_key();
+		action = device_handle_key(key, 1);
+		ui_print("Key: %d\n", key);
 	}
 	while (action != GO_BACK);
 	break;
@@ -375,4 +367,8 @@ void show_settings_menu() {
     }
     update_cot_settings();
   }
+}
+
+void clear_screen() {
+	ui_print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 }

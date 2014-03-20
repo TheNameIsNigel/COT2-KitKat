@@ -106,14 +106,6 @@ extern char* MENU_ITEMS[];
 #define MENU_ICON_XL	2
 #define MENU_ICON_XR	3
 
-extern int TOUCH_CONTROL_DEBUG;
-
-extern int maxX;
-extern int maxY;
-extern int touchY;
-
-int get_menu_icon_info(int indx1, int indx2);
-
 // Loosely track the depth of the current menu
 extern int ui_root_menu;
 
@@ -130,5 +122,7 @@ extern int ui_handle_key(int key, int visible);
 
 // call a clean reboot
 void reboot_main_system(int cmd, int flags, char *arg);
+
+void calc_touch_height();
 
 #endif
