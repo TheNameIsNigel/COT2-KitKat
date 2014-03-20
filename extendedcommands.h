@@ -1,5 +1,3 @@
-extern int script_assert_enabled;
-
 void
 show_choose_zip_menu();
 

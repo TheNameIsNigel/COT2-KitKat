@@ -486,6 +486,68 @@ int format_unknown_device(const char *device, const char* path, const char *fs_t
   return 0;
 }
 
+void partition_sdcard(const char* volume) {
+  if (!can_partition(volume)) {
+    ui_print("Can't partition device: %s\n", volume);
+    return;
+  }
+  
+  static char* ext_sizes[] = { "128M",
+    "256M",
+    "512M",
+    "1024M",
+    "2048M",
+    "4096M",
+    NULL };
+    
+    static char* swap_sizes[] = { "0M",
+      "32M",
+      "64M",
+      "128M",
+      "256M",
+      NULL };
+      
+      static char* partition_types[] = { "ext3",
+	"ext4",
+	NULL };
+	
+	static const char* ext_headers[] = { "Ext Size", "", NULL };
+	static const char* swap_headers[] = { "Swap Size", "", NULL };
+	static const char* fstype_headers[] = { "Partition Type", "", NULL };
+	
+	int ext_size = get_menu_selection(ext_headers, ext_sizes, 0, 0);
+	if (ext_size < 0)
+	  return;
+	
+	int swap_size = get_menu_selection(swap_headers, swap_sizes, 0, 0);
+	if (swap_size < 0)
+	  return;
+	
+	int partition_type = get_menu_selection(fstype_headers, partition_types, 0, 0);
+	if (partition_type < 0)
+	  return;
+	
+	char sddevice[256];
+	Volume *vol = volume_for_path(volume);
+	
+	// can_partition() ensured either blk_device or blk_device2 has /dev/block/mmcblk format
+	if (strstr(vol->blk_device, "/dev/block/mmcblk") != NULL)
+	  strcpy(sddevice, vol->blk_device);
+	else
+	  strcpy(sddevice, vol->blk_device2);
+	
+	// we only want the mmcblk, not the partition
+	sddevice[strlen("/dev/block/mmcblkX")] = '\0';
+	char cmd[PATH_MAX];
+	setenv("SDPATH", sddevice, 1);
+	sprintf(cmd, "sdparted -es %s -ss %s -efs %s -s", ext_sizes[ext_size], swap_sizes[swap_size], partition_types[partition_type]);
+	ui_print("Partitioning SD Card... please wait...\n");
+	if (0 == __system(cmd))
+	  ui_print("Done!\n");
+	else
+	  ui_print("An error occured while partitioning your SD Card. Please see /tmp/recovery.log for more details.\n");
+}
+
 int show_partition_menu() {
   static const char* headers[] = { "Storage Management", "", NULL };
   
@@ -627,7 +689,7 @@ void format_sdcard(const char* volume) {
   if (!fs_mgr_is_voldmanaged(v) && !can_partition(volume))
     return;
   
-  char* headers[] = { "Format device:", volume, "", NULL };
+  const char* headers[] = { "Format device:", volume, "", NULL };
   
   static char* list[] = { "default",
     "vfat",

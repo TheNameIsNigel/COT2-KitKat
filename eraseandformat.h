@@ -29,6 +29,8 @@ int format_device(const char *device, const char *path, const char *fs_type);
 
 int format_unknown_device(const char *device, const char* path, const char *fs_type);
 
+void partition_sdcard(const char* volume);
+
 int show_partition_menu();
 
 void format_sdcard(const char* volume);

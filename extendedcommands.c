@@ -52,8 +52,6 @@
 
 #include "adb_install.h"
 
-int script_assert_enabled = 1;
-
 int get_filtered_menu_selection(const char** headers, char** items, int menu_only, int initial_selection, int items_count) {
   int index;
   int offset = 0;
@@ -116,7 +114,7 @@ static void write_last_install_path(const char* install_path) {
 }
 
 const char* read_last_install_path() {
-  char path[PATH_MAX];
+  static char path[PATH_MAX];
   sprintf(path, "%s%s%s", get_primary_storage_path(), (is_data_media() ? "/0/" : "/"), RECOVERY_LAST_INSTALL_FILE);
   
   ensure_path_mounted(path);
@@ -227,8 +225,7 @@ int show_install_update_menu() {
     } else if (chosen_item >= FIXED_TOP_INSTALL_ZIP_MENUS && chosen_item < FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes) {
       show_choose_zip_menu(extra_paths[chosen_item - FIXED_TOP_INSTALL_ZIP_MENUS]);
     } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes) {
-      char *last_path_used;
-      last_path_used = read_last_install_path();
+      const char *last_path_used = read_last_install_path();
       if (last_path_used == NULL)
 	show_choose_zip_menu(primary_path);
       else
@@ -964,68 +961,6 @@ int show_nandroid_menu() {
   for (i = 0; i < action_entries_num; i++)
     free(list[i]);
   return chosen_item;
-}
-
-void partition_sdcard(const char* volume) {
-  if (!can_partition(volume)) {
-    ui_print("Can't partition device: %s\n", volume);
-    return;
-  }
-  
-  static char* ext_sizes[] = { "128M",
-    "256M",
-    "512M",
-    "1024M",
-    "2048M",
-    "4096M",
-    NULL };
-    
-    static char* swap_sizes[] = { "0M",
-      "32M",
-      "64M",
-      "128M",
-      "256M",
-      NULL };
-      
-      static char* partition_types[] = { "ext3",
-	"ext4",
-	NULL };
-	
-	static const char* ext_headers[] = { "Ext Size", "", NULL };
-	static const char* swap_headers[] = { "Swap Size", "", NULL };
-	static const char* fstype_headers[] = { "Partition Type", "", NULL };
-	
-	int ext_size = get_menu_selection(ext_headers, ext_sizes, 0, 0);
-	if (ext_size < 0)
-	  return;
-	
-	int swap_size = get_menu_selection(swap_headers, swap_sizes, 0, 0);
-	if (swap_size < 0)
-	  return;
-	
-	int partition_type = get_menu_selection(fstype_headers, partition_types, 0, 0);
-	if (partition_type < 0)
-	  return;
-	
-	char sddevice[256];
-	Volume *vol = volume_for_path(volume);
-	
-	// can_partition() ensured either blk_device or blk_device2 has /dev/block/mmcblk format
-	if (strstr(vol->blk_device, "/dev/block/mmcblk") != NULL)
-	  strcpy(sddevice, vol->blk_device);
-	else
-	  strcpy(sddevice, vol->blk_device2);
-	
-	// we only want the mmcblk, not the partition
-	sddevice[strlen("/dev/block/mmcblkX")] = '\0';
-	char cmd[PATH_MAX];
-	setenv("SDPATH", sddevice, 1);
-	sprintf(cmd, "sdparted -es %s -ss %s -efs %s -s", ext_sizes[ext_size], swap_sizes[swap_size], partition_types[partition_type]);
-	ui_print("Partitioning SD Card... please wait...\n");
-	if (0 == __system(cmd))
-	  ui_print("Done!\n");
-	else
-	  ui_print("An error occured while partitioning your SD Card. Please see /tmp/recovery.log for more details.\n");
 }
 
 int can_partition(const char* volume) {
