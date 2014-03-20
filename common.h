@@ -73,6 +73,7 @@ void ui_set_showing_back_button(int showBackButton);
 
 extern char** prepend_title(const char** headers);
 extern long tmplog_offset;
+extern int minimum_storage;
 
 void ui_set_log_stdout(int enabled);
 int ui_should_log_stdout();

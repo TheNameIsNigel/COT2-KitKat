@@ -38,6 +38,12 @@ int TOUCH_CONTROL_DEBUG = 0;
  */
 int touchY = 0;
 
+/*
+ * define a storage limit for backup requirements
+ * SET THIS TO SOMETHING APPROPRIATE FOR YOUR DEVICE
+ */
+int minimum_storage=512;
+
 char* MENU_HEADERS[] = { NULL };
 
 char* MENU_ITEMS[] = { "Boot Android",

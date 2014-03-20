@@ -43,8 +43,6 @@
 #include <libgen.h>
 #include "eraseandformat.h"
 
-#define LIMITED_SPACE 100
-
 void nandroid_generate_timestamp_path(char* backup_path) {
     time_t t = time(NULL);
     struct tm *tmp = localtime(&t);
@@ -414,7 +412,7 @@ int nandroid_backup(const char* backup_path) {
         uint64_t sdcard_free = bavail * bsize;
         uint64_t sdcard_free_mb = sdcard_free / (uint64_t)(1024 * 1024);
         ui_print("SD Card space free: %lluMB\n", sdcard_free_mb);
-        if (sdcard_free_mb < LIMITED_SPACE) {
+        if (sdcard_free_mb < minimum_storage) {
 	  if (show_lowspace_menu(sdcard_free_mb, backup_path) == 1) {
 	    return 0;
 	  }
