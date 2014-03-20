@@ -73,9 +73,8 @@ void ev_dispatch(void);
 
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
-static inline int res_create_display_surface(const char* name, gr_surface* pSurface) {
-    return res_create_surface(name, pSurface);
-}
+int res_create_display_surface(const char* name, gr_surface* pSurface);
+
 void res_free_surface(gr_surface surface);
 
 #endif
