@@ -29,6 +29,8 @@ extern int orswipeprompt;
 extern int orsreboot;
 extern int signature_check_enabled;
 extern char* currenttheme;
+extern char* themename;
+extern int first_boot;
 
 void update_cot_settings(void);
 

@@ -41,7 +41,10 @@ double pow(double x, double y) {
     return x;
 }
 
-int res_create_surface(const char* name, gr_surface* pSurface) {
+int res_create_surface(const char* name, gr_surface* pSurface, const char* theme_name) {
+	if (!theme_name) {
+		theme_name = "hydro";
+	}
     char resPath[256];
     GGLSurface* surface = NULL;
     int result = 0;
@@ -51,7 +54,7 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
 
     *pSurface = NULL;
 
-    snprintf(resPath, sizeof(resPath)-1, "/res/images/%s.png", name);
+    snprintf(resPath, sizeof(resPath)-1, "/res/theme/%s/%s.png", theme_name, name);
     resPath[sizeof(resPath)-1] = '\0';
     FILE* fp = fopen(resPath, "rb");
     if (fp == NULL) {
@@ -174,7 +177,7 @@ exit:
 }
 
 int res_create_display_surface(const char* name, gr_surface* pSurface) {
-	return res_create_surface(name, pSurface);
+	return res_create_surface(name, pSurface, "hydro");
 }
 
 void res_free_surface(gr_surface surface) {

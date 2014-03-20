@@ -20,6 +20,8 @@
 #include <getopt.h>
 #include <limits.h>
 #include <linux/input.h>
+#include <pthread.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,6 +74,8 @@ int orswipeprompt = 0;
 int orsreboot = 0;
 int signature_check_enabled = 0;
 char * currenttheme;
+char * themename;
+int first_boot = 0;
 
 int settheme_main(int argc, char *argv[])
 {
@@ -113,7 +117,11 @@ void create_default_settings(void) {
     "signaturecheckenabled = 1s ;\n"
     "\n");
   fclose(ini);
-  show_welcome_text();
+  // is the first_boot flag already set?
+  if (first_boot == 0) {
+	  // if not, set it!
+	  first_boot = 1;
+  }
 }
 
 void show_welcome_text() {
@@ -173,6 +181,22 @@ void update_cot_settings(void) {
   parse_settings();
 }
 
+char parse_themename(char * inifile) {
+	dictionary * ini;
+	LOGI("Attempting to load theme %s for parsing\n", inifile);
+	if (ensure_path_mounted(get_primary_storage_path()) != 0) {
+		LOGE("Error: theme not loaded!\n");
+		return "none";
+	}
+	ini = iniparser_load(inifile);
+	if (ini==NULL) {
+		LOGE("Error2: theme not loaded!\n");
+		return "none";
+	}
+	themename = iniparser_getstring(ini, "theme:themename", NULL);
+	return themename;
+}
+
 void parse_settings() {
   dictionary * ini ;
   char       * ini_name ;
@@ -229,8 +253,8 @@ void handle_theme(char * theme_name) {
   UICOLOR0 = iniparser_getint(ini, "theme:uicolor0", NULL);
   UICOLOR1 = iniparser_getint(ini, "theme:uicolor1", NULL);
   UICOLOR2 = iniparser_getint(ini, "theme:uicolor2", NULL);
-  UITHEME = iniparser_getint(ini, "theme:bgicon", NULL);
+  themename = iniparser_getstring(ini, "theme:name", NULL);
   
-  ui_dyn_background();
   ui_reset_icons();
+  ui_set_background(BACKGROUND_ICON_CLOCKWORK);
 }

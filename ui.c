@@ -110,11 +110,7 @@ static int boardRepeatableKeys[64], boardNumRepeatableKeys = 0;
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
   { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
   { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
-  { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
-  { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
+  { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_background" },
   { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
   { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING], "icon_firmware_install" },
   { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
@@ -126,102 +122,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
   { &gMenuIcon[MENU_DOWN_M],  	"icon_downM" },
   { &gMenuIcon[MENU_UP_M], 		"icon_upM" },
   { &gMenuIcon[MENU_SELECT_M],	"icon_selectM" },
-  { &gProgressBarEmpty,               "progress_empty" },
-  { &gProgressBarFill,                "progress_fill" },
-  { NULL,                             NULL },
-};
-
-static const struct { gr_surface* surface; const char *name; } BITMAPS_BLOODRED[] = {
-  { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
-  { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
-  { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
-  { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING], "icon_firmware_install" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
-  { &gMenuIcon[MENU_BACK],      "icon_back_br" },
-  { &gMenuIcon[MENU_DOWN],  	  "icon_down_br" },
-  { &gMenuIcon[MENU_UP], 		  "icon_up_br" },
-  { &gMenuIcon[MENU_SELECT],    "icon_select_br" },
-  { &gMenuIcon[MENU_BACK_M],    "icon_backM_br" },
-  { &gMenuIcon[MENU_DOWN_M],    "icon_downM_br" },
-  { &gMenuIcon[MENU_UP_M], 	  "icon_upM_br" },
-  { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_br" },
-  { &gProgressBarEmpty,               "progress_empty" },
-  { &gProgressBarFill,                "progress_fill" },
-  { NULL,                             NULL },
-};
-
-static const struct { gr_surface* surface; const char *name; } BITMAPS_LLOYD[] = {
-  { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
-  { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
-  { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
-  { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING], "icon_firmware_install" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
-  { &gMenuIcon[MENU_BACK],      "icon_back_kl" },
-  { &gMenuIcon[MENU_DOWN],  	  "icon_down_kl" },
-  { &gMenuIcon[MENU_UP], 		  "icon_up_kl" },
-  { &gMenuIcon[MENU_SELECT],    "icon_select_kl" },
-  { &gMenuIcon[MENU_BACK_M],    "icon_backM_kl" },
-  { &gMenuIcon[MENU_DOWN_M],    "icon_downM_kl" },
-  { &gMenuIcon[MENU_UP_M], 	  "icon_upM_kl" },
-  { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_kl" },
-  { &gProgressBarEmpty,               "progress_empty" },
-  { &gProgressBarFill,                "progress_fill" },
-  { NULL,                             NULL },
-};
-
-static const struct { gr_surface* surface; const char *name; } BITMAPS_ORANGE[] = {
-  { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
-  { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
-  { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
-  { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING], "icon_firmware_install" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
-  { &gMenuIcon[MENU_BACK],      "icon_back_co" },
-  { &gMenuIcon[MENU_DOWN],  	  "icon_down_co" },
-  { &gMenuIcon[MENU_UP], 		  "icon_up_co" },
-  { &gMenuIcon[MENU_SELECT],    "icon_select_co" },
-  { &gMenuIcon[MENU_BACK_M],    "icon_backM_co" },
-  { &gMenuIcon[MENU_DOWN_M],    "icon_downM_co" },
-  { &gMenuIcon[MENU_UP_M], 	  "icon_upM_co" },
-  { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_co" },
-  { &gProgressBarEmpty,               "progress_empty" },
-  { &gProgressBarFill,                "progress_fill" },
-  { NULL,                             NULL },
-};
-
-static const struct { gr_surface* surface; const char *name; } BITMAPS_DOODERBUTT[] = {
-  { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
-  { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],  "icon_clockwork" },
-  { &gBackgroundIcon[BACKGROUND_ICON_BLOODRED],  "icon_bloodred" },
-  { &gBackgroundIcon[BACKGROUND_ICON_LLOYD],  "icon_lloyd" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CITRUSORANGE],  "icon_citrusorange" },
-  { &gBackgroundIcon[BACKGROUND_ICON_DOODERBUTT],  "icon_dooderbutt" },
-  { &gBackgroundIcon[BACKGROUND_ICON_CID],  "icon_cid" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING], "icon_firmware_install" },
-  { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
-  { &gMenuIcon[MENU_BACK],      "icon_back_db" },
-  { &gMenuIcon[MENU_DOWN],  	  "icon_down_db" },
-  { &gMenuIcon[MENU_UP], 		  "icon_up_db" },
-  { &gMenuIcon[MENU_SELECT],    "icon_select_db" },
-  { &gMenuIcon[MENU_BACK_M],    "icon_backM_db" },
-  { &gMenuIcon[MENU_DOWN_M],    "icon_downM_db" },
-  { &gMenuIcon[MENU_UP_M], 	  "icon_upM_db" },
-  { &gMenuIcon[MENU_SELECT_M],  "icon_selectM_db" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
   { NULL,                             NULL },
@@ -287,7 +187,7 @@ static struct mousePosStruct {
 //Struct to return key events to recovery.c through ui_wait_key()
 volatile struct keyStruct key;
 
-static void update_screen_locked(void);
+void update_screen_locked(void);
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -400,7 +300,7 @@ static void draw_text_line(int row, const char* t) {
 
 // Redraw everything on the screen.  Does not flip pages.
 // Should only be called with gUpdateMutex locked.
-static void draw_screen_locked(void)
+void draw_screen_locked(void)
 {
   if (!ui_has_initialized) return;
   // TODO: following structure should be global
@@ -481,7 +381,7 @@ static void draw_screen_locked(void)
 
 // Redraw everything on the screen and flip the screen (make it visible).
 // Should only be called with gUpdateMutex locked.
-static void update_screen_locked(void)
+void update_screen_locked(void)
 {
   if (!ui_has_initialized) return;
   draw_screen_locked();
@@ -836,32 +736,8 @@ static void *input_thread(void *cookie)
 int i;
 void ui_init_icons(void) {
   int result;
-  switch(UITHEME) {
-    case BLOOD_RED_UI:
-      for (i = 0; BITMAPS_BLOODRED[i].name != NULL; ++i) {
-	result = res_create_surface(BITMAPS_BLOODRED[i].name, BITMAPS_BLOODRED[i].surface);
-      }
-      break;
-    case LLOYD_UI:
-      for (i = 0; BITMAPS_LLOYD[i].name != NULL; ++i) {
-	result = res_create_surface(BITMAPS_LLOYD[i].name, BITMAPS_LLOYD[i].surface);
-      }
-      break;
-    case CITRUS_ORANGE_UI:
-      for (i = 0; BITMAPS_ORANGE[i].name != NULL; ++i) {
-	result = res_create_surface(BITMAPS_ORANGE[i].name, BITMAPS_ORANGE[i].surface);
-      }
-      break;
-    case DOODERBUTT_BLUE_UI:
-      for (i = 0; BITMAPS_DOODERBUTT[i].name != NULL; ++i) {
-	result = res_create_surface(BITMAPS_DOODERBUTT[i].name, BITMAPS_DOODERBUTT[i].surface);
-      }
-      break;
-    default:
-      for (i = 0; BITMAPS[i].name != NULL; ++i) {
-	result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface);
-      }
-      break;
+  for (i = 0; BITMAPS[i].name != NULL; ++i) {
+	  result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface, themename);
   }
   if (result < 0) {
     LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
@@ -892,7 +768,7 @@ void ui_init(void)
     char filename[40];
     // "indeterminate01.png", "indeterminate02.png", ...
     sprintf(filename, "indeterminate%02d", i+1);
-    int result = res_create_surface(filename, gProgressBarIndeterminate+i);
+    int result = res_create_surface(filename, gProgressBarIndeterminate+i, themename);
     if (result < 0) {
       LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
     }
@@ -906,7 +782,7 @@ void ui_init(void)
       // "icon_installing_overlay01.png",
       // "icon_installing_overlay02.png", ...
       sprintf(filename, "icon_installing_overlay%02d", i+1);
-      int result = res_create_surface(filename, gInstallationOverlay+i);
+      int result = res_create_surface(filename, gInstallationOverlay+i, themename);
       if (result < 0) {
 	LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
       }

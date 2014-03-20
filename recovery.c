@@ -1187,6 +1187,7 @@ main(int argc, char **argv) {
 
     load_volume_table();
     process_volumes();
+    parse_settings();
     ui_init();
     vold_client_start(&v_callbacks, 0);
     vold_set_automount(1);
@@ -1302,8 +1303,11 @@ main(int argc, char **argv) {
         is_user_initiated_recovery = 1;
         if (!headless) {
             ui_set_show_text(1);
-            parse_settings();
         }
+        parse_settings();
+        if (first_boot == 1) {
+			show_welcome_text();
+		}
         if (check_for_script_file()) run_script_file();
 
         if (extendedcommand_file_exists()) {
@@ -1336,7 +1340,7 @@ main(int argc, char **argv) {
     }
     if (status != INSTALL_SUCCESS && !is_user_initiated_recovery) {
         ui_set_show_text(1);
-        ui_set_background(BACKGROUND_ICON_ERROR);
+        ui_set_background(BACKGROUND_ICON_CLOCKWORK);
     }
     else if (status != INSTALL_SUCCESS || ui_text_visible()) {
         prompt_and_wait();

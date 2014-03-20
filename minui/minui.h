@@ -72,7 +72,7 @@ void ev_dispatch(void);
 // Resources
 
 // Returns 0 if no error, else negative.
-int res_create_surface(const char* name, gr_surface* pSurface);
+int res_create_surface(const char* name, gr_surface* pSurface, const char* theme_name);
 int res_create_display_surface(const char* name, gr_surface* pSurface);
 
 void res_free_surface(gr_surface surface);

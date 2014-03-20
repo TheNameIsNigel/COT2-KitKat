@@ -28,4 +28,3 @@ void show_settings_menu();
 void show_ors_reboot_menu();
 void show_ors_nandroid_prompt_menu();
 void show_nandroid_prompt_menu();
-void ui_dyn_background();
