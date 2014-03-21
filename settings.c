@@ -283,14 +283,16 @@ void show_settings_menu() {
   list[5] = NULL;
   
   for (;;) {
+	int go_rainbow = 0;
     int chosen_item = get_menu_selection(headers, list, 0, 0);
     switch (chosen_item) {
       case GO_BACK:
 	return;
       case SETTINGS_ITEM_THEME:
       {
-	static char* ui_colors[] = {"Hydro (default)",
-	  "Blood Red",
+	static char* ui_colors[] = {"Rainbow Mode",
+		"Hydro (default)",
+		"Blood Red",
 	  NULL
 	};
 	static char* ui_header[] = {"COT Theme", "", NULL};
@@ -300,10 +302,13 @@ void show_settings_menu() {
 	  continue;
 	else {
 	  switch(ui_color) {
-	    case 0:
+		case 0:
+		  go_rainbow = 1;
+		  break;
+	    case 1:
 	      currenttheme = "hydro";
 	      break;
-	    case 1:
+	    case 2:
 	      currenttheme = "bloodred";
 	      break;
 	  }
@@ -366,6 +371,17 @@ void show_settings_menu() {
 	      return;
     }
     update_cot_settings();
+    if (go_rainbow == 1) {
+	  if (ui_get_rainbow_mode()) {
+	    ui_set_rainbow_mode(0);
+		ui_print("Rainbow mode disabled\n");
+      }
+      else {
+		ui_set_rainbow_mode(1);
+		ui_print("Rainbow mode enabled!\n");
+	  }
+	  go_rainbow = 0;
+	}
   }
 }
 

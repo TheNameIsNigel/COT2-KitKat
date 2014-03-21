@@ -516,14 +516,6 @@ get_menu_selection(const char** headers, char** items, int menu_only,
             wrap_count++;
             if (wrap_count == 5) {
                 wrap_count = 0;
-                if (ui_get_rainbow_mode()) {
-                    ui_set_rainbow_mode(0);
-                    ui_print("Rainbow mode disabled\n");
-                }
-                else {
-                    ui_set_rainbow_mode(1);
-                    ui_print("Rainbow mode enabled!\n");
-                }
             }
         }
     }
