@@ -310,16 +310,6 @@ int run_script_from_buffer(char* script_data, int script_len, char* filename)
     return 0;
 }
 
-
-
-#define EXTENDEDCOMMAND_SCRIPT "/cache/recovery/extendedcommand"
-
-int extendedcommand_file_exists()
-{
-    struct stat file_info;
-    return 0 == stat(EXTENDEDCOMMAND_SCRIPT, &file_info);
-}
-
 int edify_main(int argc, char** argv) {
     load_volume_table();
     process_volumes();
@@ -389,54 +379,4 @@ int run_script(char* filename)
     int ret = run_script_from_buffer(script_data, script_len, filename);
     free(script_data);
     return ret;
-}
-
-int run_and_remove_extendedcommand()
-{
-    char* primary_path = get_primary_storage_path();
-    char tmp[PATH_MAX];
-    sprintf(tmp, "cp %s /tmp/%s", EXTENDEDCOMMAND_SCRIPT, basename(EXTENDEDCOMMAND_SCRIPT));
-    __system(tmp);
-    remove(EXTENDEDCOMMAND_SCRIPT);
-    int i = 0;
-    for (i = 20; i > 0; i--) {
-        ui_print("Waiting for SD Card to mount (%ds)\n", i);
-        if (ensure_path_mounted(primary_path) == 0) {
-            ui_print("SD Card mounted...\n");
-            break;
-        }
-        sleep(1);
-    }
-    remove("/sdcard/clockworkmod/.recoverycheckpoint");
-    if (i == 0) {
-        ui_print("Timed out waiting for SD card... continuing anyways.");
-    }
-
-    ui_print("Verifying SD Card marker...\n");
-    struct stat st;
-    if (stat("/sdcard/clockworkmod/.salted_hash", &st) != 0) {
-        ui_print("SD Card marker not found...\n");
-        if (volume_for_path("/emmc") != NULL) {
-            ui_print("Checking Internal SD Card marker...\n");
-            ensure_path_unmounted(primary_path);
-            if (ensure_path_mounted_at_mount_point("/emmc", primary_path) != 0) {
-                ui_print("Internal SD Card marker not found... continuing anyways.\n");
-                // unmount everything, and remount as normal
-                ensure_path_unmounted("/emmc");
-                ensure_path_unmounted(primary_path);
-
-                ensure_path_mounted(primary_path);
-            }
-        }
-    }
-
-    sprintf(tmp, "/tmp/%s", basename(EXTENDEDCOMMAND_SCRIPT));
-    int ret;
-#ifdef I_AM_KOUSH
-    if (0 != (ret = before_run_script(tmp))) {
-        ui_print("Error processing ROM Manager script. Please verify that you are performing the backup, restore, or ROM installation from ROM Manager v4.4.0.0 or higher.\n");
-        return ret;
-    }
-#endif
-    return run_script(tmp);
 }
