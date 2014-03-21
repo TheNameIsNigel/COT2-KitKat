@@ -436,6 +436,18 @@ static int old_x = 0;
 static int old_y = 0;
 static int diff_x = 0;
 static int diff_y = 0;
+static int min_x_swipe_px = 100;
+static int min_y_swipe_px = 80;
+
+static void set_min_swipe_lengths() {
+    char value[PROPERTY_VALUE_MAX];
+    property_get("ro.sf.lcd_density", value, "0");
+    int screen_density = atoi(value);
+    if(screen_density > 0) {
+        min_x_swipe_px = (int)(0.5 * screen_density); // Roughly 0.5in
+        min_y_swipe_px = (int)(0.3 * screen_density); // Roughly 0.3in
+    }
+}
 
 static void reset_gestures() {
     diff_x = 0;
@@ -444,6 +456,7 @@ static void reset_gestures() {
     old_y = 0;
     touch_x = 0;
     touch_y = 0;
+    ui_clear_key_queue();
     printf("Gesture Tracking Reset\n\n");
 }
 
@@ -490,6 +503,7 @@ static int input_callback(int fd, short revents, void *data)
      
     int abs[6] = {0};
     int k;
+    set_min_swipe_lengths();
     
     ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), abs);
     /*for (k = 0; k < 6; k++)
@@ -552,13 +566,13 @@ static int input_callback(int fd, short revents, void *data)
  
         printf("X diff is: %i\n", diff_x);
      
-        if(diff_x > 130) {
+        if(diff_x > min_x_swipe_px) {
             printf("Gesture forward generated\n");
             slide_right = 1;
             ev.code = KEY_POWER;
             ev.type = EV_KEY;
             reset_gestures();
-        } else if(diff_x < -100) {
+        } else if(diff_x < -min_x_swipe_px) {
             printf("Gesture back generated\n");
             slide_left = 1;
             ev.code = KEY_BACK;
@@ -568,29 +582,22 @@ static int input_callback(int fd, short revents, void *data)
     } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_Y) {
         old_y = touch_y;
         float touch_y_rel = (float)ev.value / (float)max_y_touch;
-    printf("rel: %f\n", touch_y_rel);        
-    touch_y = touch_y_rel * gr_fb_height();
-    printf("Touch Y is: %i\n", touch_y);
-    printf("Old Y is: %i\n", old_y);
+        printf("rel: %f\n", touch_y_rel);        
+        touch_y = touch_y_rel * gr_fb_height();
+        printf("Touch Y is: %i\n", touch_y);
+        printf("Old Y is: %i\n", old_y);
         if(old_y != 0) diff_y += touch_y - old_y;
-    printf("Diff is: %i\n", diff_y);
+        printf("Diff is: %i\n", diff_y);
                  
-        //if(touch_y < gr_fb_height() - 196) {
-            if(diff_y > 80) {
-                //printf("Gesture Down generated\n");
-                ev.code = KEY_VOLUMEDOWN;
-                ev.type = EV_KEY;
-                reset_gestures();
-            } else if(diff_y < -80) {
-                //printf("Gesture Up generated\n");
-                ev.code = KEY_VOLUMEUP;
-                ev.type = EV_KEY;
-                reset_gestures();
-            }
-        //} else {
-            //input_buttons();
-            //reset_gestures();
-        //}
+        if(diff_y > min_y_swipe_px) {
+            ev.code = KEY_VOLUMEDOWN;
+            ev.type = EV_KEY;
+            reset_gestures();
+        } else if(diff_y < -min_y_swipe_px) {
+            ev.code = KEY_VOLUMEUP;
+            ev.type = EV_KEY;
+            reset_gestures();
+        }
     }
     //end touch code
     
