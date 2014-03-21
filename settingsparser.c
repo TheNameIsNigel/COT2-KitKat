@@ -77,25 +77,6 @@ char * currenttheme;
 char * themename;
 int first_boot = 0;
 
-int settheme_main(int argc, char *argv[])
-{
-    if(argc != 2) {
-        fprintf(stderr,"usage: settheme <theme>\n");
-        return 1;
-    }
-
-    //TODO: Add error checking
-    //TODO: This also segfaults...
-    theme_set(argv[1]);
-    return 0;
-}
-
-int theme_set(char * theme) {
-  currenttheme = theme;
-  update_cot_settings();
-  return 0;
-}
-
 void create_default_settings(void) {
   FILE * ini;
   if (ini = fopen_path(settings_ini_path, "r")) {
@@ -146,41 +127,6 @@ void load_fallback_settings() {
   orsreboot = 0;
 }
 
-void update_cot_settings(void) {
-  dictionary * ini ;
-  char       * ini_name ;
-  FILE * ini_file;
-  ini_name = settings_ini_path;
-  ini_file = fopen_path(ini_name, "w");
-  ini = iniparser_load(ini_name);
-  if (ini==NULL) {
-    LOGI("Can't load current INI!\n");
-  } else {
-    LOGI("Current INI loaded!\n");
-  }
-  char * ini_orsreboot[1];
-  char * ini_orswipeprompt[1];
-  char * ini_backupprompt[1];
-  char * ini_signaturecheckenabled[1];
-  
-  sprintf(ini_orsreboot, "%d", orsreboot);
-  sprintf(ini_orswipeprompt, "%d", orswipeprompt);
-  sprintf(ini_backupprompt, "%d", backupprompt);
-  sprintf(ini_signaturecheckenabled, "%d", signature_check_enabled);
-  
-  iniparser_set(ini, "settings", NULL);
-  iniparser_set(ini, "settings:theme", currenttheme);
-  iniparser_set(ini, "settings:orsreboot", ini_orsreboot);
-  iniparser_set(ini, "settings:orswipeprompt", ini_orswipeprompt);
-  iniparser_set(ini, "settings:backupprompt", ini_backupprompt);
-  iniparser_set(ini, "settings:signaturecheckenabled", ini_signaturecheckenabled);
-  iniparser_dump_ini(ini, ini_file);
-  fclose(ini_file);
-  iniparser_freedict(ini);
-  LOGI("Settings updated!\n");
-  parse_settings();
-}
-
 char parse_themename(char * inifile) {
 	dictionary * ini;
 	LOGI("Attempting to load theme %s for parsing\n", inifile);
@@ -195,6 +141,33 @@ char parse_themename(char * inifile) {
 	}
 	themename = iniparser_getstring(ini, "theme:themename", NULL);
 	return themename;
+}
+
+void handle_theme(char * theme_name) {
+  LOGI("Attempting to load theme %s\n", theme_name);
+  dictionary * ini ;
+  char * theme_base = "/res/theme/theme_";
+  char * theme_end = ".ini";
+  char * full_theme_file = malloc(strlen(theme_base) + strlen(theme_end) + strlen(theme_name));
+  strcpy(full_theme_file, theme_base);
+  strcat(full_theme_file, theme_name);
+  strcat(full_theme_file, theme_end);
+  
+  ini = iniparser_load(full_theme_file);
+  if (ini==NULL) {
+    LOGI("Can't load theme %s!\n", full_theme_file);
+    return;
+  }
+  free(full_theme_file);
+  LOGI("Theme %s loaded!\n", theme_name);
+  
+  UICOLOR0 = iniparser_getint(ini, "theme:uicolor0", NULL);
+  UICOLOR1 = iniparser_getint(ini, "theme:uicolor1", NULL);
+  UICOLOR2 = iniparser_getint(ini, "theme:uicolor2", NULL);
+  themename = iniparser_getstring(ini, "theme:name", NULL);
+  
+  ui_reset_icons();
+  ui_set_background(BACKGROUND_ICON_CLOCKWORK);
 }
 
 void parse_settings() {
@@ -232,29 +205,58 @@ void parse_settings() {
   handle_theme(currenttheme);
 }
 
-void handle_theme(char * theme_name) {
-  LOGI("Attempting to load theme %s\n", theme_name);
+void update_cot_settings(void) {
   dictionary * ini ;
-  char * theme_base = "/res/theme/theme_";
-  char * theme_end = ".ini";
-  char * full_theme_file = malloc(strlen(theme_base) + strlen(theme_end) + strlen(theme_name));
-  strcpy(full_theme_file, theme_base);
-  strcat(full_theme_file, theme_name);
-  strcat(full_theme_file, theme_end);
-  
-  ini = iniparser_load(full_theme_file);
+  char       * ini_name ;
+  FILE * ini_file;
+  ini_name = settings_ini_path;
+  ini_file = fopen_path(ini_name, "w");
+  ini = iniparser_load(ini_name);
   if (ini==NULL) {
-    LOGI("Can't load theme %s!\n", full_theme_file);
-    return;
+    LOGI("Can't load current INI!\n");
+  } else {
+    LOGI("Current INI loaded!\n");
   }
-  free(full_theme_file);
-  LOGI("Theme %s loaded!\n", theme_name);
+  char * ini_orsreboot[1];
+  char * ini_orswipeprompt[1];
+  char * ini_backupprompt[1];
+  char * ini_signaturecheckenabled[1];
   
-  UICOLOR0 = iniparser_getint(ini, "theme:uicolor0", NULL);
-  UICOLOR1 = iniparser_getint(ini, "theme:uicolor1", NULL);
-  UICOLOR2 = iniparser_getint(ini, "theme:uicolor2", NULL);
-  themename = iniparser_getstring(ini, "theme:name", NULL);
+  sprintf(ini_orsreboot, "%d", orsreboot);
+  sprintf(ini_orswipeprompt, "%d", orswipeprompt);
+  sprintf(ini_backupprompt, "%d", backupprompt);
+  sprintf(ini_signaturecheckenabled, "%d", signature_check_enabled);
   
-  ui_reset_icons();
-  ui_set_background(BACKGROUND_ICON_CLOCKWORK);
+  iniparser_set(ini, "settings", NULL);
+  iniparser_set(ini, "settings:theme", currenttheme);
+  iniparser_set(ini, "settings:orsreboot", ini_orsreboot);
+  iniparser_set(ini, "settings:orswipeprompt", ini_orswipeprompt);
+  iniparser_set(ini, "settings:backupprompt", ini_backupprompt);
+  iniparser_set(ini, "settings:signaturecheckenabled", ini_signaturecheckenabled);
+  iniparser_dump_ini(ini, ini_file);
+  fclose(ini_file);
+  iniparser_freedict(ini);
+  LOGI("Settings updated!\n");
+  parse_settings();
+}
+
+int settheme_main(int argc, char *argv[])
+{
+    if(argc != 2) {
+        fprintf(stderr,"usage: settheme <theme>\ntheme can be hydro or bloodred\n");
+        return 1;
+    }
+
+    if (!strcmp(argv[1], "hydro")) {
+		currenttheme = "hydro";
+		printf("Setting theme to hydro...\n");
+	} else if (!strcmp(argv[1], "bloodred")) {
+		currenttheme = "bloodred";
+		printf("Setting theme to bloodred...\n");
+	} else {
+		fprintf(stderr, "usage: settheme <theme>\ntheme can be hydro or bloodred\n");
+		return 1;
+	}
+	update_cot_settings();
+    return 0;
 }
