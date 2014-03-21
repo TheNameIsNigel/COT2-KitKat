@@ -4,6 +4,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 commands_recovery_local_path := $(LOCAL_PATH)
+
+# Universal BoardConfig
+include $(commands_recovery_local_path)/boardconfig/BoardConfig.mk
+
 # LOCAL_CPP_EXTENSION := .c
 
 LOCAL_SRC_FILES := \
