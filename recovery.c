@@ -899,7 +899,7 @@ int run_script_file(void) {
 	    remove_nl = 0;
 	  strncpy(value2, tok, line_len - remove_nl);
 	  ui_print("Backup folder set to '%s'\n", value2);
-	  sprintf(backup_path, "/sdcard/clockworkmod/backup/%s", value2);
+	  sprintf(backup_path, "/sdcard/cotrecovery/backup/%s", value2);
 	} else {
 	  nandroid_generate_timestamp_path(backup_path);
 	}
@@ -1281,7 +1281,6 @@ main(int argc, char **argv) {
             ui_print("Cache wipe failed.\n");
         }
     } else {
-        LOGI("Checking for extendedcommand...\n");
         status = INSTALL_ERROR;  // No command specified
         // we are starting up in user initiated recovery here
         // let's set up some default options
@@ -1296,20 +1295,6 @@ main(int argc, char **argv) {
 			show_welcome_text();
 		}
         if (check_for_script_file()) run_script_file();
-
-        if (extendedcommand_file_exists()) {
-            LOGI("Running extendedcommand...\n");
-            int ret;
-            if (0 == (ret = run_and_remove_extendedcommand())) {
-                status = INSTALL_SUCCESS;
-                ui_set_show_text(0);
-            }
-            else {
-                handle_failure(ret);
-            }
-        } else {
-            LOGI("Skipping execution of extendedcommand, file not found...\n");
-        }
     }
 
     if (sideload) {

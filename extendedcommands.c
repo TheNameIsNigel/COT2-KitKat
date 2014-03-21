@@ -491,7 +491,7 @@ void show_nandroid_restore_menu(const char* path) {
   static const char* headers[] = { "Choose an image to restore", "", NULL };
   
   char tmp[PATH_MAX];
-  sprintf(tmp, "%s/clockworkmod/backup/", path);
+  sprintf(tmp, "%s/cotrecovery/backup/", path);
   char* file = choose_file_menu(tmp, NULL, headers);
   if (file == NULL)
     return;
@@ -511,7 +511,7 @@ void show_nandroid_delete_menu(const char* path) {
   static const char* headers[] = { "Choose an image to delete", "", NULL };
   
   char tmp[PATH_MAX];
-  sprintf(tmp, "%s/clockworkmod/backup/", path);
+  sprintf(tmp, "%s/cotrecovery/backup/", path);
   char* file = choose_file_menu(tmp, NULL, headers);
   if (file == NULL)
     return;
@@ -710,7 +710,7 @@ void show_nandroid_advanced_restore_menu(const char* path) {
     NULL };
     
     char tmp[PATH_MAX];
-    sprintf(tmp, "%s/clockworkmod/backup/", path);
+    sprintf(tmp, "%s/cotrecovery/backup/", path);
     char* file = choose_file_menu(tmp, NULL, advancedheaders);
     if (file == NULL)
       return;
@@ -771,7 +771,7 @@ void show_nandroid_advanced_restore_menu(const char* path) {
 
 static void run_dedupe_gc() {
   char path[PATH_MAX];
-  char* fmt = "%s/clockworkmod/blobs";
+  char* fmt = "%s/cotrecovery/blobs";
   char* primary_path = get_primary_storage_path();
   char** extra_paths = get_extra_storage_paths();
   int i = 0;
@@ -926,12 +926,12 @@ int show_nandroid_menu() {
 	  if (tmp == NULL) {
 	    struct timeval tp;
 	    gettimeofday(&tp, NULL);
-	    sprintf(backup_path, "%s/clockworkmod/backup/%ld", chosen_path, tp.tv_sec);
+	    sprintf(backup_path, "%s/cotrecovery/backup/%ld", chosen_path, tp.tv_sec);
 	  } else {
 	    char path_fmt[PATH_MAX];
-	    strftime(path_fmt, sizeof(path_fmt), "clockworkmod/backup/%F.%H.%M.%S", tmp);
+	    strftime(path_fmt, sizeof(path_fmt), "cotrecovery/backup/%F.%H.%M.%S", tmp);
 	    // this sprintf results in:
-	    // clockworkmod/backup/%F.%H.%M.%S (time values are populated too)
+	    // cotrecovery/backup/%F.%H.%M.%S (time values are populated too)
 	    sprintf(backup_path, "%s/%s", chosen_path, path_fmt);
 	  }
 	  nandroid_backup(backup_path);
@@ -1093,7 +1093,7 @@ void process_volumes() {
   struct timeval tp;
   gettimeofday(&tp, NULL);
   sprintf(backup_name, "before-ext4-convert-%ld", tp.tv_sec);
-  sprintf(backup_path, "%s/clockworkmod/backup/%s", get_primary_storage_path(), backup_name);
+  sprintf(backup_path, "%s/cotrecovery/backup/%s", get_primary_storage_path(), backup_name);
   
   ui_set_show_text(1);
   ui_print("Filesystems need to be converted to ext4.\n");
@@ -1112,9 +1112,9 @@ void handle_failure(int ret) {
     return;
   if (0 != ensure_path_mounted(get_primary_storage_path()))
     return;
-  mkdir("/sdcard/clockworkmod", S_IRWXU | S_IRWXG | S_IRWXO);
-  __system("cp /tmp/recovery.log /sdcard/clockworkmod/recovery.log");
-  ui_print("/tmp/recovery.log was copied to /sdcard/clockworkmod/recovery.log. Please open ROM Manager to report the issue.\n");
+  mkdir("/sdcard/cotrecovery", S_IRWXU | S_IRWXG | S_IRWXO);
+  __system("cp /tmp/recovery.log /sdcard/cotrecovery/recovery.log");
+  ui_print("/tmp/recovery.log was copied to /sdcard/cotrecovery/recovery.log. Please open COT Manager to report the issue.\n");
 }
 
 int is_path_mounted(const char* path) {

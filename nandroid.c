@@ -49,9 +49,9 @@ void nandroid_generate_timestamp_path(char* backup_path) {
     if (tmp == NULL) {
         struct timeval tp;
         gettimeofday(&tp, NULL);
-        sprintf(backup_path, "/sdcard/clockworkmod/backup/%ld", tp.tv_sec);
+        sprintf(backup_path, "/sdcard/cotrecovery/backup/%ld", tp.tv_sec);
     } else {
-        strftime(backup_path, PATH_MAX, "/sdcard/clockworkmod/backup/%F.%H.%M.%S", tmp);
+        strftime(backup_path, PATH_MAX, "/sdcard/cotrecovery/backup/%F.%H.%M.%S", tmp);
     }
 }
 
