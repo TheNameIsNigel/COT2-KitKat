@@ -1,5 +1,9 @@
 /* Touch functions */
 
+/* Original by tdm/CyanogenMod Review:
+ * http://review.cyanogenmod.org/#/c/61359/1
+ */
+
 /* #define DEBUG_TOUCH_EVENTS */
 
 /* Some extra input defines */
