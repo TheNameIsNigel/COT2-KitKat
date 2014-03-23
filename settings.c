@@ -315,8 +315,8 @@ void show_settings_menu() {
 	  break;
 	}
       }
-	    case SETTINGS_ITEM_ORS_REBOOT:
-	    {
+      case SETTINGS_ITEM_ORS_REBOOT:
+      {
 	      if (orsreboot == 1) {
 		ui_print("Disabling forced reboots.\n");
 		list[1] = "Enable forced reboots";
@@ -328,7 +328,7 @@ void show_settings_menu() {
 	      }
 	      break;
 	    }
-	    case SETTINGS_ITEM_ORS_WIPE:
+      case SETTINGS_ITEM_ORS_WIPE:
 	    {
 	      if (orswipeprompt == 1) {
 		ui_print("Disabling wipe prompt.\n");
@@ -341,7 +341,7 @@ void show_settings_menu() {
 	      }
 	      break;
 	    }
-	    case SETTINGS_ITEM_NAND_PROMPT:
+      case SETTINGS_ITEM_NAND_PROMPT:
 	    {
 	      if (backupprompt == 1) {
 		ui_print("Disabling zip flash nandroid prompt.\n");
@@ -367,7 +367,7 @@ void show_settings_menu() {
 	      }
 	      break;
 	    }
-	    default:
+      default:
 	      return;
     }
     update_cot_settings();

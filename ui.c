@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define KILL_BILL
 
 #include <errno.h>
 #include <fcntl.h>
@@ -41,6 +42,8 @@ extern int __system(const char *command);
 // Include extendedcommand.h in order to get our custom ui colors
 #include "extendedcommands.h"
 
+#ifndef KILL_BILL
+
 // these are included in the original kernel's linux/input.h but are missing from AOSP
 #ifndef SYN_MT_REPORT
 #define SYN_REPORT 0
@@ -51,6 +54,8 @@ extern int __system(const char *command);
 #define ABS_MT_POSITION_X 0x35  /* Center X ellipse position */
 #define ABS_MT_POSITION_Y 0x36  /* Center Y ellipse position */
 #define ABS_MT_TRACKING_ID 0x39  /* Center Y ellipse position */
+#endif
+
 #endif
 
 #define resX gr_fb_width()
@@ -113,7 +118,9 @@ static gr_surface *gInstallationOverlay;
 static gr_surface *gProgressBarIndeterminate;
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
+#ifndef KILL_BILL
 static gr_surface gVirtualKeys; // surface for virtual keys
+#endif
 static gr_surface gBackground;
 static int ui_has_initialized = 0;
 static int ui_log_stdout = 1;
@@ -130,7 +137,9 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
   { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
+#ifndef KILL_BILL
   { &gVirtualKeys,     "virtual_keys" },
+#endif
   { NULL,                             NULL },
 };
 
@@ -174,6 +183,10 @@ static unsigned long key_last_repeat[KEY_MAX + 1], key_press_time[KEY_MAX + 1];
 static volatile char key_pressed[KEY_MAX + 1];
 
 void update_screen_locked(void);
+
+#ifdef KILL_BILL
+#include "touch.c"
+#endif
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -258,19 +271,21 @@ static void draw_progress_locked()
   }
 }
 
+#ifndef KILL_BILL
 // Draw the virtual keys on the screen.  Does not flip pages.
 // Should only be called with gUpdateMutex locked.
 static void draw_virtualkeys_locked() {
 	gr_surface surface = gVirtualKeys;
 	int iconWidth = gr_get_width(surface);
 	int iconHeight = gr_get_height(surface);
-    board_touch_button_height = iconHeight;
+	board_touch_button_height = iconHeight;
 	// align left, full width on 720p displays, but moves over on
 	// tablets with > 720 pixels
 	int iconX = 0;
 	int iconY = (gr_fb_height() - iconHeight);
 	gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
 }
+#endif
 
 static void draw_text_line(int row, const char* t) {
   if (t[0] != '\0') {
@@ -301,6 +316,7 @@ void draw_screen_locked(void)
     int j = 0;
     int row = 0;            // current row that we are drawing on
     if (show_menu) {
+#ifndef KILL_BILL
       // Setup our text colors
       gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
       gr_fill(0, (menu_top + menu_sel - menu_show_start) * CHAR_HEIGHT,
@@ -334,6 +350,9 @@ void draw_screen_locked(void)
       
       gr_fill(0, row*CHAR_HEIGHT+CHAR_HEIGHT/2-1,
 	      gr_fb_width(), row*CHAR_HEIGHT+CHAR_HEIGHT/2+1);
+#else
+      row = draw_touch_menu(menu, menu_items, menu_top, menu_sel, menu_show_start);
+#endif
     }
     
     gr_color(NORMAL_TEXT_COLOR);
@@ -350,7 +369,9 @@ void draw_screen_locked(void)
       draw_text_line(start_row + r, text[(cur_row + r) % MAX_ROWS]);
     }
   }
+#ifndef KILL_BILL
   draw_virtualkeys_locked();
+#endif
 }
 
 // Redraw everything on the screen and flip the screen (make it visible).
@@ -471,7 +492,34 @@ static int input_callback(int fd, short revents, void *data)
     ret = ev_get_input(fd, revents, &ev);
     if (ret)
         return -1;
-        
+    
+#ifdef KILL_BILL
+    if (touch_handle_input(fd, &ev))
+      return 0;
+    
+    if (ev.type == EV_SYN) {
+      return 0;
+    } else if (ev.type == EV_REL) {
+      if (ev.code == REL_Y) {
+	rel_sum += ev.value;
+	if (rel_sum > 3) {
+	  fake_key = 1;
+	  ev.type = EV_KEY;
+	  ev.code = KEY_DOWN;
+	  ev.value = 1;
+	  rel_sum = 0;
+	} else if (rel_sum < -3) {
+	  fake_key = 1;
+	  ev.type = EV_KEY;
+	  ev.code = KEY_UP;
+	  ev.value = 1;
+	  rel_sum = 0;
+	}
+      }
+    } else {
+      rel_sum = 0;
+    }
+#else   
     if (ev.type == EV_SYN) {
     printf("SYN Generated!\n");
     printf("ev.type: %x, ev.code: %x, ev.value: %i\n", ev.type, ev.code, ev.value);
@@ -600,7 +648,8 @@ static int input_callback(int fd, short revents, void *data)
         }
     }
     //end touch code
-    
+#endif
+
     if (ev.type != EV_KEY || ev.code > KEY_MAX)
         return 0;
  
@@ -672,10 +721,16 @@ void ui_init(void)
   ui_has_initialized = 1;
   gr_init();
   ev_init(input_callback, NULL);
+#ifdef KILL_BILL
+  touch_init();
+#endif
   
   text_col = text_row = 0;
   text_rows = gr_fb_height() / CHAR_HEIGHT;
   max_menu_rows = text_rows - MIN_LOG_ROWS;
+#ifdef KILL_BILL
+  max_menu_rows = get_max_menu_rows(max_menu_rows);
+#endif
   if (max_menu_rows > MENU_MAX_ROWS)
     max_menu_rows = MENU_MAX_ROWS;
   if (text_rows > MAX_ROWS) text_rows = MAX_ROWS;
@@ -1231,7 +1286,11 @@ int ui_get_selected_item() {
 }
 
 int ui_handle_key(int key, int visible) {
+#ifdef KILL_BILL
+  return touch_handle_key(key, visible);
+#else
   return device_handle_key(key, visible);
+#endif
 }
 
 void ui_delete_line() {
