@@ -87,7 +87,7 @@ static void touch_draw_text_line(int row, const char *t)
 static void touch_draw_menu_item(int textrow, const char *text, int selected)
 {
     if (selected) {
-	gr_color(MENU_TEXT_COLOR);
+	gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
 	gr_fill(0, (textrow-1)*CHAR_HEIGHT,
 		gr_fb_width(), (textrow+2)*CHAR_HEIGHT-1);
 	gr_color(HILITE_TEXT_COLOR);
@@ -97,7 +97,7 @@ static void touch_draw_menu_item(int textrow, const char *text, int selected)
 	gr_color(BACKGROUND_COLOR);
 	gr_fill(0, (textrow-1)*CHAR_HEIGHT,
 		gr_fb_width(), (textrow+2)*CHAR_HEIGHT-1);
-	gr_color(MENU_TEXT_COLOR);
+	gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
 	gr_text(0, (textrow+1)*CHAR_HEIGHT-1, text, 0);
     }
 
