@@ -184,6 +184,9 @@ static volatile char key_pressed[KEY_MAX + 1];
 
 void update_screen_locked(void);
 
+static int min_x_swipe_px = 100;
+static int min_y_swipe_px = 80;
+
 #ifdef KILL_BILL
 #include "touch.c"
 #endif
@@ -457,8 +460,6 @@ static int old_x = 0;
 static int old_y = 0;
 static int diff_x = 0;
 static int diff_y = 0;
-static int min_x_swipe_px = 100;
-static int min_y_swipe_px = 80;
 
 static void set_min_swipe_lengths() {
     char value[PROPERTY_VALUE_MAX];

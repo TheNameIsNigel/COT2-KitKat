@@ -45,6 +45,16 @@ static struct point touch_start;
 static struct point touch_end;
 static int touch_last_y;
 
+static void touch_set_min_swipe_lengths() {
+  char value[PROPERTY_VALUE_MAX];
+  property_get("ro.sf.lcd_density", value, "0");
+  int screen_density = atoi(value);
+  if (screen_density > 0) {
+    min_x_swipe_px = (int)(0.5 * screen_density);
+    min_y_swipe_px = (int)(0.3 * screen_density);
+  }
+}
+
 int touch_handle_key(int key, int visible) {
     if (visible) {
 	switch (key) {
@@ -324,7 +334,7 @@ int touch_handle_gestures(struct input_event *ev)
 	return 1;
     }
     if (abs(dx) > abs(dy)) {
-	if (abs(dx) > gr_fb_width()/4) {
+	if (abs(dx) > min_x_swipe_px) {
 	    /* Horizontal swipe, handle it on release */
 	    in_swipe = 1;
 	}
@@ -334,7 +344,7 @@ int touch_handle_gestures(struct input_event *ev)
 	    touch_last_y = touch_end.y;
 	}
 	dy = touch_end.y - touch_last_y;
-	if (abs(dy) > 3*CHAR_HEIGHT) {
+	if (abs(dy) > min_y_swipe_px) {
 	    in_swipe = 1;
 	    touch_last_y = touch_end.y;
 	    ev->type = EV_KEY;
@@ -350,6 +360,7 @@ int touch_handle_input(int fd, struct input_event *ev)
 {
     int rc = 1;
     int dx, dy;
+    touch_set_min_swipe_lengths();
 
     show_event(ev);
 
