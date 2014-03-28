@@ -1162,15 +1162,6 @@ main(int argc, char **argv) {
 
     device_ui_init(&ui_parameters);
 
-#ifdef BOARD_RECOVERY_SWIPE
-#ifndef BOARD_TOUCH_RECOVERY
-    //display directions for swipe controls
-    ui_print("Swipe up/down to change selections.\n");
-    ui_print("Swipe to the right for enter.\n");
-    ui_print("Swipe to the left for back.\n");
-#endif
-#endif
-
     load_volume_table();
     process_volumes();
     parse_settings();

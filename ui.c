@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define KILL_BILL
 
 #include <errno.h>
 #include <fcntl.h>
@@ -41,22 +40,6 @@ extern int __system(const char *command);
 
 // Include extendedcommand.h in order to get our custom ui colors
 #include "extendedcommands.h"
-
-#ifndef KILL_BILL
-
-// these are included in the original kernel's linux/input.h but are missing from AOSP
-#ifndef SYN_MT_REPORT
-#define SYN_REPORT 0
-#define SYN_MT_REPORT 2
-#define ABS_MT_SLOT 0x2f
-#define ABS_MT_TOUCH_MAJOR  0x30  /* Major axis of touching ellipse */
-#define ABS_MT_WIDTH_MAJOR  0x32  /* Major axis of approaching ellipse */
-#define ABS_MT_POSITION_X 0x35  /* Center X ellipse position */
-#define ABS_MT_POSITION_Y 0x36  /* Center Y ellipse position */
-#define ABS_MT_TRACKING_ID 0x39  /* Center Y ellipse position */
-#endif
-
-#endif
 
 #define resX gr_fb_width()
 #define resY gr_fb_height()
@@ -110,17 +93,12 @@ UIParameters ui_parameters = {
   13, 190, // installation icon overlay offset
 };
 
-int board_touch_button_height = 0;
-
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
 static gr_surface *gInstallationOverlay;
 static gr_surface *gProgressBarIndeterminate;
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
-#ifndef KILL_BILL
-static gr_surface gVirtualKeys; // surface for virtual keys
-#endif
 static gr_surface gBackground;
 static int ui_has_initialized = 0;
 static int ui_log_stdout = 1;
@@ -137,9 +115,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
   { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR], "icon_firmware_error" },
   { &gProgressBarEmpty,               "progress_empty" },
   { &gProgressBarFill,                "progress_fill" },
-#ifndef KILL_BILL
-  { &gVirtualKeys,     "virtual_keys" },
-#endif
   { NULL,                             NULL },
 };
 
@@ -187,9 +162,7 @@ void update_screen_locked(void);
 static int min_x_swipe_px = 100;
 static int min_y_swipe_px = 80;
 
-#ifdef KILL_BILL
 #include "touch.c"
-#endif
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -274,22 +247,6 @@ static void draw_progress_locked()
   }
 }
 
-#ifndef KILL_BILL
-// Draw the virtual keys on the screen.  Does not flip pages.
-// Should only be called with gUpdateMutex locked.
-static void draw_virtualkeys_locked() {
-	gr_surface surface = gVirtualKeys;
-	int iconWidth = gr_get_width(surface);
-	int iconHeight = gr_get_height(surface);
-	board_touch_button_height = iconHeight;
-	// align left, full width on 720p displays, but moves over on
-	// tablets with > 720 pixels
-	int iconX = 0;
-	int iconY = (gr_fb_height() - iconHeight);
-	gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
-}
-#endif
-
 static void draw_text_line(int row, const char* t) {
   if (t[0] != '\0') {
     if (ui_get_rainbow_mode()) ui_rainbow_mode();
@@ -319,43 +276,7 @@ void draw_screen_locked(void)
     int j = 0;
     int row = 0;            // current row that we are drawing on
     if (show_menu) {
-#ifndef KILL_BILL
-      // Setup our text colors
-      gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-      gr_fill(0, (menu_top + menu_sel - menu_show_start) * CHAR_HEIGHT,
-	      gr_fb_width(), (menu_top + menu_sel - menu_show_start + 1)*CHAR_HEIGHT+1);
-      
-      gr_color(HEADER_TEXT_COLOR);
-      for (i = 0; i < menu_top; ++i) {
-	draw_text_line(i, menu[i]);
-	row++;
-      }
-      
-      if (menu_items - menu_show_start + menu_top >= max_menu_rows)
-	j = max_menu_rows - menu_top;
-      else
-	j = menu_items - menu_show_start;
-      
-      gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-      for (i = menu_show_start + menu_top; i < (menu_show_start + menu_top + j); ++i) {
-	if (i == menu_top + menu_sel) {
-	  gr_color(255, 255, 255, 255);
-	  draw_text_line(i - menu_show_start , menu[i]);
-	  gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-	} else {
-	  gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
-	  draw_text_line(i - menu_show_start, menu[i]);
-	}
-	row++;
-	if (row >= max_menu_rows)
-	  break;
-      }
-      
-      gr_fill(0, row*CHAR_HEIGHT+CHAR_HEIGHT/2-1,
-	      gr_fb_width(), row*CHAR_HEIGHT+CHAR_HEIGHT/2+1);
-#else
       row = draw_touch_menu(menu, menu_items, menu_top, menu_sel, menu_show_start);
-#endif
     }
     
     gr_color(NORMAL_TEXT_COLOR);
@@ -372,9 +293,6 @@ void draw_screen_locked(void)
       draw_text_line(start_row + r, text[(cur_row + r) % MAX_ROWS]);
     }
   }
-#ifndef KILL_BILL
-  draw_virtualkeys_locked();
-#endif
 }
 
 // Redraw everything on the screen and flip the screen (make it visible).
@@ -451,38 +369,6 @@ static void *progress_thread(void *cookie)
 }
 
 static int rel_sum = 0;
-static int in_touch = 0;
-static int slide_right = 0;
-static int slide_left = 0;
-static int touch_x = 0;
-static int touch_y = 0;
-static int old_x = 0;
-static int old_y = 0;
-static int diff_x = 0;
-static int diff_y = 0;
-
-static void set_min_swipe_lengths() {
-    char value[PROPERTY_VALUE_MAX];
-    property_get("ro.sf.lcd_density", value, "0");
-    int screen_density = atoi(value);
-    if(screen_density > 0) {
-        min_x_swipe_px = (int)(0.5 * screen_density); // Roughly 0.5in
-        min_y_swipe_px = (int)(0.3 * screen_density); // Roughly 0.3in
-    }
-}
-
-static void reset_gestures() {
-    diff_x = 0;
-    diff_y = 0;
-    old_x = 0;
-    old_y = 0;
-    touch_x = 0;
-    touch_y = 0;
-    ui_clear_key_queue();
-    printf("Gesture Tracking Reset\n\n");
-}
-
-static const char * const absval[6] = { "Value", "Min  ", "Max  ", "Fuzz ", "Flat ", "Resolution "};
 
 static int input_callback(int fd, short revents, void *data)
 {
@@ -494,7 +380,6 @@ static int input_callback(int fd, short revents, void *data)
     if (ret)
         return -1;
     
-#ifdef KILL_BILL
     if (touch_handle_input(fd, &ev))
       return 0;
     
@@ -520,136 +405,6 @@ static int input_callback(int fd, short revents, void *data)
     } else {
       rel_sum = 0;
     }
-#else   
-    if (ev.type == EV_SYN) {
-    printf("SYN Generated!\n");
-    printf("ev.type: %x, ev.code: %x, ev.value: %i\n", ev.type, ev.code, ev.value);
-        return 0;
-    } else if (ev.type == EV_REL) {
-        if (ev.code == REL_Y) {
-            // accumulate the up or down motion reported by
-            // the trackball.  When it exceeds a threshold
-            // (positive or negative), fake an up/down
-            // key event.
-            rel_sum += ev.value;
-            if (rel_sum > 3) {
-                fake_key = 1;
-                ev.type = EV_KEY;
-                ev.code = KEY_DOWN;
-                ev.value = 1;
-                rel_sum = 0;
-            } else if (rel_sum < -3) {
-                fake_key = 1;
-                ev.type = EV_KEY;
-                ev.code = KEY_UP;
-                ev.value = 1;
-                rel_sum = 0;
-            }
-        }
-    } else {
-        rel_sum = 0;
-    }
-     
-    int abs[6] = {0};
-    int k;
-    set_min_swipe_lengths();
-    
-    ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), abs);
-    /*for (k = 0; k < 6; k++)
-    if ((k < 3) || abs[k])
-    printf("      %s %6d\n", absval[k], abs[k]);*/
-    int max_x_touch = abs[2];
-    
-    ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), abs);
-    /*for (k = 0; k < 6; k++)
-    if ((k < 6) || abs[k])
-    printf("      %s %6d\n", absval[k], abs[k]);*/
-    int max_y_touch = abs[2];
-    
-    //printf("x and y bounds: %i x %i\n", max_x_touch, max_y_touch);
-    
-    //start touch code
-    printf("ev.type: %x, ev.code: %x, ev.value: %i\n", ev.type, ev.code, ev.value);
-    if(ev.type == EV_ABS && ev.code == ABS_MT_TRACKING_ID) {
-        if(in_touch == 0) {
-            in_touch = 1; //starting to track touch...
-            reset_gestures();
-        } else {
-            //finger lifted! lets run with this
-            ev.type = EV_KEY; //touch panel support!!!
-            int keywidth = gr_fb_width() / 3;
-            printf("Final Values touch_y: %i, touch_x: %i, fb width: %i\n", touch_y, touch_x, gr_fb_width());
-            if (touch_y > gr_fb_height() - board_touch_button_height && touch_x > 0) {
-				// finger lifted in the touch panel region
-				printf("keywidth: %d\n", keywidth);
-				if (touch_x < keywidth) {
-					printf("Up generated!\n");
-					ev.code = KEY_VOLUMEUP;
-				} else if (touch_x < keywidth*2) {
-					printf("Down generated!\n");
-					ev.code = KEY_VOLUMEDOWN;
-				} else {
-					printf("Select generated!\n");
-					ev.code = KEY_POWER;
-				}
-			}
-            if(slide_right == 1) {
-                ev.code = KEY_POWER;
-                slide_right = 0;
-            } else if(slide_left == 1) {
-                ev.code = KEY_BACK;
-                slide_left = 0;
-            }
- 
-            ev.value = 1;
-            in_touch = 0;
-            reset_gestures();
-        }
-    } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_X) {
-        old_x = touch_x;
-        float touch_x_rel = (float)ev.value / (float)max_x_touch;
-        printf("rel: %f\n", touch_x_rel);        
-        touch_x = touch_x_rel * gr_fb_width();
-        printf("Touch X is: %i\n", touch_x);
-        if(old_x != 0) diff_x += touch_x - old_x;
- 
-        printf("X diff is: %i\n", diff_x);
-     
-        if(diff_x > min_x_swipe_px) {
-            printf("Gesture forward generated\n");
-            slide_right = 1;
-            ev.code = KEY_POWER;
-            ev.type = EV_KEY;
-            reset_gestures();
-        } else if(diff_x < -min_x_swipe_px) {
-            printf("Gesture back generated\n");
-            slide_left = 1;
-            ev.code = KEY_BACK;
-            ev.type = EV_KEY;
-            reset_gestures();
-        }
-    } else if(ev.type == EV_ABS && ev.code == ABS_MT_POSITION_Y) {
-        old_y = touch_y;
-        float touch_y_rel = (float)ev.value / (float)max_y_touch;
-        printf("rel: %f\n", touch_y_rel);        
-        touch_y = touch_y_rel * gr_fb_height();
-        printf("Touch Y is: %i\n", touch_y);
-        printf("Old Y is: %i\n", old_y);
-        if(old_y != 0) diff_y += touch_y - old_y;
-        printf("Diff is: %i\n", diff_y);
-                 
-        if(diff_y > min_y_swipe_px) {
-            ev.code = KEY_VOLUMEDOWN;
-            ev.type = EV_KEY;
-            reset_gestures();
-        } else if(diff_y < -min_y_swipe_px) {
-            ev.code = KEY_VOLUMEUP;
-            ev.type = EV_KEY;
-            reset_gestures();
-        }
-    }
-    //end touch code
-#endif
 
     if (ev.type != EV_KEY || ev.code > KEY_MAX)
         return 0;
@@ -668,7 +423,6 @@ static int input_callback(int fd, short revents, void *data)
     const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
     if (ev.value > 0 && key_queue_len < queue_max) {
         key_queue[key_queue_len++] = ev.code;
-        //printf("added %i to the queue\n", ev.code);
         if (boardEnableKeyRepeat) {
             struct timeval now;
             gettimeofday(&now, NULL);
@@ -722,16 +476,14 @@ void ui_init(void)
   ui_has_initialized = 1;
   gr_init();
   ev_init(input_callback, NULL);
-#ifdef KILL_BILL
   touch_init();
-#endif
   
   text_col = text_row = 0;
   text_rows = gr_fb_height() / CHAR_HEIGHT;
   max_menu_rows = text_rows - MIN_LOG_ROWS;
-#ifdef KILL_BILL
+
   max_menu_rows = get_max_menu_rows(max_menu_rows);
-#endif
+
   if (max_menu_rows > MENU_MAX_ROWS)
     max_menu_rows = MENU_MAX_ROWS;
   if (text_rows > MAX_ROWS) text_rows = MAX_ROWS;
@@ -1287,11 +1039,7 @@ int ui_get_selected_item() {
 }
 
 int ui_handle_key(int key, int visible) {
-#ifdef KILL_BILL
   return touch_handle_key(key, visible);
-#else
-  return device_handle_key(key, visible);
-#endif
 }
 
 void ui_delete_line() {
