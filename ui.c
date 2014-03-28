@@ -159,6 +159,24 @@ static volatile char key_pressed[KEY_MAX + 1];
 
 void update_screen_locked(void);
 
+int get_batt_stats(void) {
+  static int level = -1;
+  
+  char value[4];
+  FILE * capacity = fopen("/sys/class/power_supply/battery/capacity","rt");
+  if (capacity) {
+    fgets(value, 4, capacity);
+    fclose(capacity);
+    level = atoi(value);
+    
+    if (level > 100)
+      level = 100;
+    if (level < 0)
+      level = 0;
+  }
+  return level;
+}
+
 #include "touch.c"
 
 // Return the current time as a double (including fractions of a second).
@@ -244,11 +262,27 @@ static void draw_progress_locked()
   }
 }
 
-static void draw_text_line(int row, const char* t) {
+#define LEFT_ALIGN 0
+#define CENTER_ALIGN 1
+#define RIGHT_ALIGN 2
+
+static void draw_text_line(int row, const char* t, int align) {
+  int col = 0;
   if (t[0] != '\0') {
-    if (ui_get_rainbow_mode()) ui_rainbow_mode();
-    gr_text(0, (row+1)*CHAR_HEIGHT-1, t, 0);
-  }
+    int length = strnlen(t, MENU_MAX_COLS) * CHAR_WIDTH;
+    switch(align)
+    {
+      case LEFT_ALIGN:
+	col = 1;
+	break;
+      case CENTER_ALIGN:
+	col = ((gr_fb_width() - length) / 2);
+	break;
+      case RIGHT_ALIGN:
+	col = gr_fb_width() - length - 1;
+	break;
+    }
+    gr_text(col, (row+1)*CHAR_HEIGHT-1, t);
 }
 
 //#define MENU_TEXT_COLOR 0, 191, 255, 255
@@ -287,7 +321,7 @@ void draw_screen_locked(void)
     
     int r;
     for (r = 0; r < (available_rows < MAX_ROWS ? available_rows : MAX_ROWS); r++) {
-      draw_text_line(start_row + r, text[(cur_row + r) % MAX_ROWS]);
+      draw_text_line(start_row + r, text[(cur_row + r) % MAX_ROWS], LEFT_ALIGN);
     }
   }
 }

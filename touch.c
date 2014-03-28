@@ -93,11 +93,29 @@ int touch_handle_key(int key, int visible) {
     return NO_ACTION;
 }
 
-static void touch_draw_text_line(int row, const char *t)
+#define LEFT_ALIGN 0
+#define CENTER_ALIGN 1
+#define RIGHT_ALIGN 2
+
+static void touch_draw_text_line(int row, const char *t, int align)
 {
-    if (t[0] != '\0') {
-	gr_text(0, (row+1)*CHAR_HEIGHT-1, t, 0);
+  int col = 0;
+  if (t[0] != '\0') {
+    int length = strnlen(t, MENU_MAX_COLS) * CHAR_WIDTH;
+    switch(align)
+    {
+      case LEFT_ALIGN:
+	col = 1;
+	break;
+      case CENTER_ALIGN:
+	col = ((gr_fb_width() - length) / 2);
+	break;
+      case RIGHT_ALIGN:
+	col = gr_fb_width() - length - 1;
+	break;
     }
+    gr_text(0, (row+1)*CHAR_HEIGHT-1, t, 0);
+  }
 }
 
 static void touch_draw_menu_item(int textrow, const char *text, int selected)
@@ -130,7 +148,7 @@ int draw_touch_menu(char menu[MENU_MAX_ROWS][MENU_MAX_COLS], int menu_items, int
   
   gr_color(HEADER_TEXT_COLOR);
   for (i = 0; i < menu_top; ++i) {
-    touch_draw_text_line(i*2, menu[i]);
+    touch_draw_text_line(i*2, menu[i], LEFT_ALIGN);
     row++;
   }
   
@@ -165,7 +183,7 @@ int get_max_menu_rows(int max_menu_rows)
     return (textrows - menu_top) / 3;
 }
 
-static void touch_calibrate_axis(int fd, int axis, int *minp, int *maxp)
+// static void touch_calibrate_axis(int fd, int axis, int *minp, int *maxp)
 {
     struct input_absinfo info;
     memset(&info, 0, sizeof(info));
