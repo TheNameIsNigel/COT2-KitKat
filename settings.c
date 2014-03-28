@@ -75,8 +75,8 @@ void show_cot_options_menu() {
     NULL
   };
   
-#define COT_OPTIONS_ITEM_ADVANCED	0
-#define COT_OPTIONS_ITEM_SETTINGS	1
+  #define COT_OPTIONS_ITEM_ADVANCED	0
+  #define COT_OPTIONS_ITEM_SETTINGS	1
   
   static char* list[3];
   list[0] = "Advanced Options";
@@ -103,20 +103,20 @@ void show_cot_options_menu() {
 }
 
 void show_advanced_options_menu() {
-
-#ifdef RECOVERY_DEBUG_BUILD
+  
+  #ifdef RECOVERY_DEBUG_BUILD
   #ifdef ENABLE_LOKI
-    #define FIXED_ADVANCED_ENTRIES 3
+  #define FIXED_ADVANCED_ENTRIES 3
   #else
-    #define FIXED_ADVANCED_ENTRIES 2
+  #define FIXED_ADVANCED_ENTRIES 2
   #endif
-#else
+  #else
   #ifdef ENABLE_LOKI
-    #define FIXED_ADVANCED_ENTRIES 2
+  #define FIXED_ADVANCED_ENTRIES 2
   #else
-    #define FIXED_ADVANCED_ENTRIES 1
+  #define FIXED_ADVANCED_ENTRIES 1
   #endif
-#endif
+  #endif
   
   char buf[80];
   int i = 0, j = 0, chosen_item = 0;
@@ -131,18 +131,18 @@ void show_advanced_options_menu() {
     NULL
   };
   
-#ifdef RECOVERY_DEBUG_BUILD
+  #ifdef RECOVERY_DEBUG_BUILD
   list[0] = "Recovery Debugging";
   list[1] = "Wipe Dalvik-Cache";
-#ifdef ENABLE_LOKI
+  #ifdef ENABLE_LOKI
   list[2] = "Toggle Loki";
-#endif
-#else
+  #endif
+  #else
   list[0] = "Wipe Dalvik-Cache";
-#ifdef ENABLE_LOKI
+  #ifdef ENABLE_LOKI
   list[1] = "Toggle Loki";
-#endif
-#endif
+  #endif
+  #endif
   
   char list_prefix[] = "Partition ";
   if (can_partition(primary_path)) {
@@ -169,16 +169,16 @@ void show_advanced_options_menu() {
       {
 	return;
       }
-#ifdef RECOVERY_DEBUG_BUILD
+      #ifdef RECOVERY_DEBUG_BUILD
       case 0:
       {
 	show_recovery_debugging_menu();
 	break;
       }
       case 1:
-#else
+	#else
       case 0:
-#endif
+	#endif
       {
 	if (0 != ensure_path_mounted("/data"))
 	  break;
@@ -194,17 +194,17 @@ void show_advanced_options_menu() {
 	ensure_path_unmounted("/data");
 	break;
       }
-#ifdef ENABLE_LOKI
-#ifdef RECOVERY_DEBUG_BUILD
+      #ifdef ENABLE_LOKI
+      #ifdef RECOVERY_DEBUG_BUILD
       case 2:
-#else
+	#else
       case 1:
-#endif
+	#endif
       {
 	toggle_loki_support();
 	break;
       }
-#endif
+      #endif
       default:
       {
 	partition_sdcard(list[chosen_item] + strlen(list_prefix));
@@ -245,9 +245,9 @@ void show_recovery_debugging_menu() {
 	int action;
 	do
 	{
-		key = ui_wait_key();
-		action = device_handle_key(key, 1);
-		ui_print("Key: %d\n", key);
+	  key = ui_wait_key();
+	  action = device_handle_key(key, 1);
+	  ui_print("Key: %d\n", key);
 	}
 	while (action != GO_BACK);
 	break;
@@ -306,16 +306,14 @@ void show_settings_menu() {
   list[5] = NULL;
   
   for (;;) {
-	int go_rainbow = 0;
     int chosen_item = get_menu_selection(headers, list, 0, 0);
     switch (chosen_item) {
       case GO_BACK:
 	return;
       case SETTINGS_ITEM_THEME:
       {
-	static char* ui_colors[] = {"Rainbow Mode",
-		"Hydro (default)",
-		"Blood Red",
+	static char* ui_colors[] = {"Hydro (default)",
+	  "Blood Red",
 	  NULL
 	};
 	static char* ui_header[] = {"COT Theme", "", NULL};
@@ -325,13 +323,10 @@ void show_settings_menu() {
 	  continue;
 	else {
 	  switch(ui_color) {
-		case 0:
-		  go_rainbow = 1;
-		  break;
-	    case 1:
+	    case 0:
 	      currenttheme = "hydro";
 	      break;
-	    case 2:
+	    case 1:
 	      currenttheme = "bloodred";
 	      break;
 	  }
@@ -340,74 +335,63 @@ void show_settings_menu() {
       }
       case SETTINGS_ITEM_ORS_REBOOT:
       {
-	      if (orsreboot == 1) {
-		ui_print("Disabling forced reboots.\n");
-		list[1] = "Enable forced reboots";
-		orsreboot = 0;
-	      } else {
-		ui_print("Enabling forced reboots.\n");
-		list[1] = "Disable forced reboots";
-		orsreboot = 1;
-	      }
-	      break;
-	    }
+	if (orsreboot == 1) {
+	  ui_print("Disabling forced reboots.\n");
+	  list[1] = "Enable forced reboots";
+	  orsreboot = 0;
+	} else {
+	  ui_print("Enabling forced reboots.\n");
+	  list[1] = "Disable forced reboots";
+	  orsreboot = 1;
+	}
+	break;
+      }
       case SETTINGS_ITEM_ORS_WIPE:
-	    {
-	      if (orswipeprompt == 1) {
-		ui_print("Disabling wipe prompt.\n");
-		list[2] = "Enable wipe prompt";
-		orswipeprompt = 0;
-	      } else {
-		ui_print("Enabling wipe prompt.\n");
-		list[2] = "Disable wipe prompt";
-		orswipeprompt = 1;
-	      }
-	      break;
-	    }
+      {
+	if (orswipeprompt == 1) {
+	  ui_print("Disabling wipe prompt.\n");
+	  list[2] = "Enable wipe prompt";
+	  orswipeprompt = 0;
+	} else {
+	  ui_print("Enabling wipe prompt.\n");
+	  list[2] = "Disable wipe prompt";
+	  orswipeprompt = 1;
+	}
+	break;
+      }
       case SETTINGS_ITEM_NAND_PROMPT:
-	    {
-	      if (backupprompt == 1) {
-		ui_print("Disabling zip flash nandroid prompt.\n");
-		list[3] = "Enable zip flash nandroid prompt";
-		backupprompt = 0;
-	      } else {
-		ui_print("Enabling zip flash nandroid prompt.\n");
-		list[3] = "Disable zip flash nandroid prompt";
-		backupprompt = 1;
-	      }
-	      break;
-	    }
-	    case SETTINGS_ITEM_SIGCHECK:
-	    {
-	      if (signature_check_enabled == 1) {
-		ui_print("Disabling md5 signature check.\n");
-		list[4] = "Enable md5 signature check";
-		signature_check_enabled = 0;
-	      } else {
-		ui_print("Enabling md5 signature check.\n");
-		list[4] = "Disable md5 signature check";
-		signature_check_enabled = 1;
-	      }
-	      break;
-	    }
+      {
+	if (backupprompt == 1) {
+	  ui_print("Disabling zip flash nandroid prompt.\n");
+	  list[3] = "Enable zip flash nandroid prompt";
+	  backupprompt = 0;
+	} else {
+	  ui_print("Enabling zip flash nandroid prompt.\n");
+	  list[3] = "Disable zip flash nandroid prompt";
+	  backupprompt = 1;
+	}
+	break;
+      }
+      case SETTINGS_ITEM_SIGCHECK:
+      {
+	if (signature_check_enabled == 1) {
+	  ui_print("Disabling md5 signature check.\n");
+	  list[4] = "Enable md5 signature check";
+	  signature_check_enabled = 0;
+	} else {
+	  ui_print("Enabling md5 signature check.\n");
+	  list[4] = "Disable md5 signature check";
+	  signature_check_enabled = 1;
+	}
+	break;
+      }
       default:
-	      return;
+	return;
     }
     update_cot_settings();
-    if (go_rainbow == 1) {
-	  if (ui_get_rainbow_mode()) {
-	    ui_set_rainbow_mode(0);
-		ui_print("Rainbow mode disabled\n");
-      }
-      else {
-		ui_set_rainbow_mode(1);
-		ui_print("Rainbow mode enabled!\n");
-	  }
-	  go_rainbow = 0;
-	}
   }
 }
 
 void clear_screen() {
-	ui_print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+  ui_print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 }
