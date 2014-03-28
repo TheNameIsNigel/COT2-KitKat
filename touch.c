@@ -31,6 +31,8 @@
 #define SEPARATOR_COLOR 160, 160, 160, 255
 #endif
 
+int BATT_LINE, TIME_LINE, BATT_POS, TIME_POS;
+
 struct point {
     int x;
     int y;
@@ -146,6 +148,28 @@ int draw_touch_menu(char menu[MENU_MAX_ROWS][MENU_MAX_COLS], int menu_items, int
   int j = 0;
   int row = 0;
   
+  gr_color(UICOLOR0, UICOLOR1, UICOLOR2, 255);
+  
+  //Show battery level
+  int batt_level = 0;
+  batt_level = get_batt_stats();
+  if (batt_level < 21) {
+    gr_color(255, 0, 0, 255);
+  }
+  char batt_text[40];
+  char time_gmt[40];
+  
+  // Get a usable time
+  struct tm *current;
+  time_t now;
+  now = time(0);
+  current = localtime(&now);
+  sprintf(batt_text, "[%d%%]", batt_level);
+  sprintf(time_gmt, "[%02D:%02D GMT]", current->tm_hour, current->tm_min);
+  
+  touch_draw_text_line(BATT_LINE, batt_text, BATT_POS);
+  touch_draw_text_line(TIME_LINE, time_gmt, TIME_POS);
+  
   gr_color(HEADER_TEXT_COLOR);
   for (i = 0; i < menu_top; ++i) {
     touch_draw_text_line(i*2, menu[i], LEFT_ALIGN);
@@ -183,7 +207,7 @@ int get_max_menu_rows(int max_menu_rows)
     return (textrows - menu_top) / 3;
 }
 
-// static void touch_calibrate_axis(int fd, int axis, int *minp, int *maxp)
+static void touch_calibrate_axis(int fd, int axis, int *minp, int *maxp)
 {
     struct input_absinfo info;
     memset(&info, 0, sizeof(info));
