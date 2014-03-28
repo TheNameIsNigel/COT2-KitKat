@@ -64,7 +64,7 @@ extern int __system(const char *command);
 
 extern int __system(const char *command);
 
-static int gShowBackButton = 1;
+static int gShowBackButton = 0;
 
 #define MAX_COLS 96
 
