@@ -36,6 +36,7 @@ void ui_clear_key_queue();
 // Write a message to the on-screen log shown with Alt-L (also to stderr).
 // The screen is small, and users may need to report these messages to support,
 // so keep the output short and not too cryptic.
+void error_print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void ui_print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void ui_printlogtail(int nb_lines);
 
@@ -119,7 +120,7 @@ void ui_reset_progress();
 // Redraw the entire screen for the purpose of resetting our icons
 void ui_reset_icons();
 
-#define LOGE(...) ui_print("E:" __VA_ARGS__)
+#define LOGE(...) error_print("E:" __VA_ARGS__)
 #define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)
 #define LOGI(...) fprintf(stdout, "I:" __VA_ARGS__)
 

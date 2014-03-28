@@ -44,6 +44,8 @@ static int in_swipe;
 static struct point touch_start;
 static struct point touch_end;
 static int touch_last_y;
+static int min_x_swipe_px = 100;
+static int min_y_swipe_px = 80;
 
 static void touch_set_min_swipe_lengths() {
   char value[PROPERTY_VALUE_MAX];
@@ -122,30 +124,30 @@ static void touch_draw_menu_item(int textrow, const char *text, int selected)
 
 int draw_touch_menu(char menu[MENU_MAX_ROWS][MENU_MAX_COLS], int menu_items, int menu_top, int menu_sel, int menu_show_start)
 {
-    int i = 0;
-    int j = 0;
-    int row = 0;
-
-    gr_color(HEADER_TEXT_COLOR);
-    for (i = 0; i < menu_top; ++i) {
-	touch_draw_text_line(i*2, menu[i]);
-	row++;
-    }
-
-    if (menu_items - menu_show_start + menu_top >= max_menu_rows)
-	j = max_menu_rows - menu_top;
-    else
-	j = menu_items - menu_show_start;
-
-    for (i = menu_show_start; i < (menu_show_start + j); ++i) {
-	    int textrow = menu_top + 3*(i - menu_show_start) + 1;
-	    touch_draw_menu_item(textrow, menu[menu_top + i], (i == menu_sel));
-	row++;
-	if (row >= max_menu_rows)
-	    break;
-    }
-
-    return row;
+  int i = 0;
+  int j = 0;
+  int row = 0;
+  
+  gr_color(HEADER_TEXT_COLOR);
+  for (i = 0; i < menu_top; ++i) {
+    touch_draw_text_line(i*2, menu[i]);
+    row++;
+  }
+  
+  if (menu_items - menu_show_start + menu_top >= max_menu_rows)
+    j = max_menu_rows - menu_top;
+  else
+    j = menu_items - menu_show_start;
+  
+  for (i = menu_show_start; i < (menu_show_start + j); ++i) {
+    int textrow = menu_top + 3*(i - menu_show_start) + 1;
+    touch_draw_menu_item(textrow, menu[menu_top + i], (i == menu_sel));
+    row++;
+    if (row >= max_menu_rows)
+      break;
+  }
+  
+  return row;
 }
 
 void touch_init()

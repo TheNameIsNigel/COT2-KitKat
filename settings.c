@@ -104,10 +104,18 @@ void show_cot_options_menu() {
 
 void show_advanced_options_menu() {
 
-#ifdef ENABLE_LOKI
-#define FIXED_ADVANCED_ENTRIES 3
+#ifdef RECOVERY_DEBUG_BUILD
+  #ifdef ENABLE_LOKI
+    #define FIXED_ADVANCED_ENTRIES 3
+  #else
+    #define FIXED_ADVANCED_ENTRIES 2
+  #endif
 #else
-#define FIXED_ADVANCED_ENTRIES 2
+  #ifdef ENABLE_LOKI
+    #define FIXED_ADVANCED_ENTRIES 2
+  #else
+    #define FIXED_ADVANCED_ENTRIES 1
+  #endif
 #endif
   
   char buf[80];
@@ -123,10 +131,17 @@ void show_advanced_options_menu() {
     NULL
   };
   
+#ifdef RECOVERY_DEBUG_BUILD
   list[0] = "Recovery Debugging";
   list[1] = "Wipe Dalvik-Cache";
 #ifdef ENABLE_LOKI
   list[2] = "Toggle Loki";
+#endif
+#else
+  list[0] = "Wipe Dalvik-Cache";
+#ifdef ENABLE_LOKI
+  list[1] = "Toggle Loki";
+#endif
 #endif
   
   char list_prefix[] = "Partition ";
@@ -154,12 +169,16 @@ void show_advanced_options_menu() {
       {
 	return;
       }
+#ifdef RECOVERY_DEBUG_BUILD
       case 0:
       {
 	show_recovery_debugging_menu();
 	break;
       }
       case 1:
+#else
+      case 0:
+#endif
       {
 	if (0 != ensure_path_mounted("/data"))
 	  break;
@@ -176,7 +195,11 @@ void show_advanced_options_menu() {
 	break;
       }
 #ifdef ENABLE_LOKI
+#ifdef RECOVERY_DEBUG_BUILD
       case 2:
+#else
+      case 1:
+#endif
       {
 	toggle_loki_support();
 	break;

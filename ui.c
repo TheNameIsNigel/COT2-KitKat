@@ -159,9 +159,6 @@ static volatile char key_pressed[KEY_MAX + 1];
 
 void update_screen_locked(void);
 
-static int min_x_swipe_px = 100;
-static int min_y_swipe_px = 80;
-
 #include "touch.c"
 
 // Return the current time as a double (including fractions of a second).
@@ -483,6 +480,7 @@ void ui_init(void)
   max_menu_rows = text_rows - MIN_LOG_ROWS;
 
   max_menu_rows = get_max_menu_rows(max_menu_rows);
+  printf("Max Menu Rows: %d\n", max_menu_rows);
 
   if (max_menu_rows > MENU_MAX_ROWS)
     max_menu_rows = MENU_MAX_ROWS;
@@ -654,16 +652,19 @@ int ui_get_text_cols() {
   return text_cols;
 }
 
-void ui_print(const char *fmt, ...)
+void error_print(const char *fmt, ...)
 {
+  /*
+   * Don't use error_print directly, use LOGE instead as this function may
+   * change in the future.
+   */
   char buf[256];
   va_list ap;
   va_start(ap, fmt);
   vsnprintf(buf, 256, fmt, ap);
   va_end(ap);
   
-  if (ui_log_stdout)
-    fputs(buf, stdout);
+  fputs(buf, stdout);
   
   // if we are running 'ui nice' mode, we do not want to force a screen update
   // for this line if not necessary.
@@ -696,6 +697,18 @@ void ui_print(const char *fmt, ...)
     update_screen_locked();
   }
   pthread_mutex_unlock(&gUpdateMutex);
+}
+
+void ui_print(const char *fmt, ...)
+{
+  char buf[256];
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(buf, 256, fmt, ap);
+  va_end(ap);
+  
+  if (ui_log_stdout)
+    fputs(buf, stdout);
 }
 
 void ui_printlogtail(int nb_lines) {
