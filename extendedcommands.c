@@ -1214,3 +1214,16 @@ int verify_root_and_recovery() {
   ui_set_showing_back_button(old_val);
   return ret;
 }
+
+// check if file or folder exists
+int file_found(const char* filename) {
+    struct stat s;
+    if (strncmp(filename, "/sbin/", 6) != 0 && strncmp(filename, "/res/", 5) != 0 && strncmp(filename, "/tmp/", 5) != 0) {
+        // do not try to mount ramdisk, else it will error "unknown volume for path..."
+        ensure_path_mounted(filename);
+    }
+    if (0 == stat(filename, &s))
+        return 1;
+
+    return 0;
+}

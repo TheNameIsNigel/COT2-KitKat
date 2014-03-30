@@ -222,6 +222,11 @@ include $(commands_recovery_local_path)/utilities/Android.mk
 include $(commands_recovery_local_path)/su/Android.mk
 include $(commands_recovery_local_path)/voldclient/Android.mk
 include $(commands_recovery_local_path)/loki/Android.mk
+
+ifeq ($(NO_AROMA_FILE_MANAGER),)
+  include $(commands_recovery_local_path)/aromafm/Android.mk
+endif
+
 commands_recovery_local_path :=
 
 endif

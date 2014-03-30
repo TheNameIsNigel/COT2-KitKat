@@ -60,6 +60,7 @@
 #include "settings.h"
 #include "settingsparser.h"
 #include "eraseandformat.h"
+#include "recovery_settings.h"
 
 int UICOLOR0 = 0;
 int UICOLOR1 = 0;
@@ -77,12 +78,13 @@ void show_cot_options_menu() {
   
 #define COT_OPTIONS_ITEM_ADVANCED	0
 #define COT_OPTIONS_ITEM_SETTINGS	1
-#define COT_OPTIONS_ITEM_ABOUT		2
+#define COT_OPTIONS_ITEM_AROMA		2
   
+
   static char* list[4];
   list[0] = "Advanced Options";
   list[1] = "COT Settings";
-  list[2] = "About COT";
+  list[2] = "Aroma File Manager";
   list[3] = NULL;
   
   for (;;) {
@@ -102,9 +104,9 @@ void show_cot_options_menu() {
 	show_settings_menu();
 	break;
       }
-      case COT_OPTIONS_ITEM_ABOUT:
+      case COT_OPTIONS_ITEM_AROMA:
       {
-	show_about_menu();
+	run_aroma_browser();
 	break;
       }
     }
@@ -425,3 +427,36 @@ void show_about_menu() {
 void clear_screen() {
   ui_print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 }
+
+// launch aromafm.zip from default locations
+static int default_aromafm(const char* root) {
+    char aroma_file[PATH_MAX];
+    sprintf(aroma_file, "%s/%s", root, AROMA_FM_PATH);
+
+    if (file_found(aroma_file)) {
+        install_zip(aroma_file);
+        return 0;
+    }
+    return -1;
+}
+
+void run_aroma_browser() {
+    // look for AROMA_FM_PATH in storage paths
+    char** extra_paths = get_extra_storage_paths();
+    int num_extra_volumes = get_num_extra_volumes();
+    int ret = -1;
+    int i = 0;
+
+    vold_mount_all();
+    ret = default_aromafm(get_primary_storage_path());
+    if (extra_paths != NULL) {
+        i = 0;
+        while (ret && i < num_extra_volumes) {
+            ret = default_aromafm(extra_paths[i]);
+            ++i;
+        }
+    }
+    if (ret != 0)
+        LOGE("No %s in storage paths\n", AROMA_FM_PATH);
+}
+//------ end aromafm launcher functions

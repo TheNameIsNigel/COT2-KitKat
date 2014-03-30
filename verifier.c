@@ -38,7 +38,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 
     FILE* f = fopen(path, "rb");
     if (f == NULL) {
-        LOGE("failed to open %s (%s)\n", path, strerror(errno));
+        LOGD("failed to open %s (%s)\n", path, strerror(errno));
         return VERIFY_FAILURE;
     }
 
@@ -54,20 +54,20 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 #define FOOTER_SIZE 6
 
     if (fseek(f, -FOOTER_SIZE, SEEK_END) != 0) {
-        LOGE("failed to seek in %s (%s)\n", path, strerror(errno));
+        LOGD("failed to seek in %s (%s)\n", path, strerror(errno));
         fclose(f);
         return VERIFY_FAILURE;
     }
 
     unsigned char footer[FOOTER_SIZE];
     if (fread(footer, 1, FOOTER_SIZE, f) != FOOTER_SIZE) {
-        LOGE("failed to read footer from %s (%s)\n", path, strerror(errno));
+        LOGD("failed to read footer from %s (%s)\n", path, strerror(errno));
         fclose(f);
         return VERIFY_FAILURE;
     }
 
     if (footer[2] != 0xff || footer[3] != 0xff) {
-        LOGE("footer is wrong\n");
+        LOGD("footer is wrong\n");
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -79,7 +79,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 
     if (signature_start - FOOTER_SIZE < RSANUMBYTES) {
         // "signature" block isn't big enough to contain an RSA block.
-        LOGE("signature is too short\n");
+        LOGD("signature is too short\n");
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -91,7 +91,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     size_t eocd_size = comment_size + EOCD_HEADER_SIZE;
 
     if (fseek(f, -eocd_size, SEEK_END) != 0) {
-        LOGE("failed to seek in %s (%s)\n", path, strerror(errno));
+        LOGD("failed to seek in %s (%s)\n", path, strerror(errno));
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -104,12 +104,12 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 
     unsigned char* eocd = malloc(eocd_size);
     if (eocd == NULL) {
-        LOGE("malloc for EOCD record failed\n");
+        LOGD("malloc for EOCD record failed\n");
         fclose(f);
         return VERIFY_FAILURE;
     }
     if (fread(eocd, 1, eocd_size, f) != eocd_size) {
-        LOGE("failed to read eocd from %s (%s)\n", path, strerror(errno));
+        LOGD("failed to read eocd from %s (%s)\n", path, strerror(errno));
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -118,7 +118,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     // magic number $50 $4b $05 $06.
     if (eocd[0] != 0x50 || eocd[1] != 0x4b ||
         eocd[2] != 0x05 || eocd[3] != 0x06) {
-        LOGE("signature length doesn't match EOCD marker\n");
+        LOGD("signature length doesn't match EOCD marker\n");
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -131,7 +131,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
             // the real one, minzip will find the later (wrong) one,
             // which could be exploitable.  Fail verification if
             // this sequence occurs anywhere after the real one.
-            LOGE("EOCD marker occurs after start of EOCD\n");
+            LOGD("EOCD marker occurs after start of EOCD\n");
             fclose(f);
             return VERIFY_FAILURE;
         }
@@ -154,7 +154,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     SHA256_init(&sha256_ctx);
     unsigned char* buffer = (unsigned char*)malloc(BUFFER_SIZE);
     if (buffer == NULL) {
-        LOGE("failed to alloc memory for sha1 buffer\n");
+        LOGD("failed to alloc memory for sha1 buffer\n");
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -166,7 +166,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
         unsigned int size = BUFFER_SIZE;
         if (signed_len - so_far < size) size = signed_len - so_far;
         if (fread(buffer, 1, size, f) != size) {
-            LOGE("failed to read data from %s (%s)\n", path, strerror(errno));
+            LOGD("failed to read data from %s (%s)\n", path, strerror(errno));
             fclose(f);
             return VERIFY_FAILURE;
         }
@@ -205,7 +205,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
         }
     }
     free(eocd);
-    LOGE("failed to verify whole-file signature\n");
+    LOGD("failed to verify whole-file signature\n");
     return VERIFY_FAILURE;
 }
 
@@ -245,7 +245,7 @@ load_keys(const char* filename, int* numKeys) {
 
     FILE* f = fopen(filename, "r");
     if (f == NULL) {
-        LOGE("opening %s: %s\n", filename, strerror(errno));
+        LOGD("opening %s: %s\n", filename, strerror(errno));
         goto exit;
     }
 
@@ -291,7 +291,7 @@ load_keys(const char* filename, int* numKeys) {
                 goto exit;
             }
             if (key->len != RSANUMWORDS) {
-                LOGE("key length (%d) does not match expected size\n", key->len);
+                LOGD("key length (%d) does not match expected size\n", key->len);
                 goto exit;
             }
             for (i = 1; i < key->len; ++i) {
@@ -314,7 +314,7 @@ load_keys(const char* filename, int* numKeys) {
                 break;
 
             default:
-                LOGE("unexpected character between keys\n");
+                LOGD("unexpected character between keys\n");
                 goto exit;
             }
 

@@ -63,3 +63,5 @@ void partition_sdcard(const char* volume);
 #ifdef ENABLE_LOKI
 void toggle_loki_support();
 #endif
+
+int file_found(const char* filename);
