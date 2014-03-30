@@ -159,6 +159,10 @@ static volatile char key_pressed[KEY_MAX + 1];
 
 void update_screen_locked(void);
 
+#define LEFT_ALIGN 0
+#define CENTER_ALIGN 1
+#define RIGHT_ALIGN 2
+
 int get_batt_stats(void) {
   static int level = -1;
   
@@ -261,10 +265,6 @@ static void draw_progress_locked()
     }
   }
 }
-
-#define LEFT_ALIGN 0
-#define CENTER_ALIGN 1
-#define RIGHT_ALIGN 2
 
 static void draw_text_line(int row, const char* t, int align) {
   int col = 0;

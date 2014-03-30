@@ -42,9 +42,9 @@ double pow(double x, double y) {
 }
 
 int res_create_surface(const char* name, gr_surface* pSurface, const char* theme_name) {
-	if (!theme_name) {
-		theme_name = "hydro";
-	}
+  if (!theme_name) {
+    theme_name = "hydro";
+  }
     char resPath[256];
     GGLSurface* surface = NULL;
     int result = 0;
@@ -177,7 +177,7 @@ exit:
 }
 
 int res_create_display_surface(const char* name, gr_surface* pSurface) {
-	return res_create_surface(name, pSurface, "hydro");
+  return res_create_surface(name, pSurface, "hydro");
 }
 
 void res_free_surface(gr_surface surface) {

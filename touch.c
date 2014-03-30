@@ -60,44 +60,40 @@ static void touch_set_min_swipe_lengths() {
 }
 
 int touch_handle_key(int key, int visible) {
-    if (visible) {
-	switch (key) {
-	    case KEY_DOWN:
-	    case KEY_VOLUMEDOWN:
-	    case KEY_MENU:
-		return HIGHLIGHT_DOWN;
-
-	    case KEY_UP:
-	    case KEY_VOLUMEUP:
-	    case KEY_HOME:
-		return HIGHLIGHT_UP;
-
-	    case KEY_POWER:
-		if (ui_get_showing_back_button()) {
-		    return SELECT_ITEM;
-		}
-		if (!get_allow_toggle_display() && !ui_root_menu) {
-		    return GO_BACK;
-		}
-		break;
-
-	    case KEY_BACK:
-		if (!ui_root_menu) {
-		    return GO_BACK;
-		}
-		break;
-
-	    case KEY_ENTER:
-		return SELECT_ITEM;
+  if (visible) {
+    switch (key) {
+      case KEY_DOWN:
+      case KEY_VOLUMEDOWN:
+      case KEY_MENU:
+	return HIGHLIGHT_DOWN;
+	
+      case KEY_UP:
+      case KEY_VOLUMEUP:
+      case KEY_HOME:
+	return HIGHLIGHT_UP;
+	
+      case KEY_POWER:
+	if (ui_get_showing_back_button()) {
+	  return SELECT_ITEM;
 	}
+	if (!get_allow_toggle_display() && !ui_root_menu) {
+	  return GO_BACK;
+	}
+	break;
+	
+      case KEY_BACK:
+	if (!ui_root_menu) {
+	  return GO_BACK;
+	}
+	break;
+	
+      case KEY_ENTER:
+	return SELECT_ITEM;
     }
-
-    return NO_ACTION;
+  }
+  
+  return NO_ACTION;
 }
-
-#define LEFT_ALIGN 0
-#define CENTER_ALIGN 1
-#define RIGHT_ALIGN 2
 
 static void touch_draw_text_line(int row, const char *t, int align)
 {
@@ -116,7 +112,7 @@ static void touch_draw_text_line(int row, const char *t, int align)
 	col = gr_fb_width() - length - 1;
 	break;
     }
-    gr_text(0, (row+1)*CHAR_HEIGHT-1, t, 0);
+    gr_text(col, (row+1)*CHAR_HEIGHT-1, t, 0);
   }
 }
 
