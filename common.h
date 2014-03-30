@@ -40,8 +40,8 @@ void error_print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void ui_print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void ui_printlogtail(int nb_lines);
 
-void ui_delete_line();
-void ui_set_show_text(int value);
+void ui_delete_line(int num);
+void ui_set_show_text();
 void ui_set_nice(int enabled);
 #define ui_nice_print(...) { ui_set_nice(1); ui_print(__VA_ARGS__); ui_set_nice(0); }
 int ui_was_niced();
