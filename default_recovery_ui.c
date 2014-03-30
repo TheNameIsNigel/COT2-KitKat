@@ -44,11 +44,6 @@ int touchY = 0;
  */
 int minimum_storage=512;
 
-int BATT_LINE = 0;
-int BATT_POS = RIGHT_ALIGN;
-int TIME_LINE = 1;
-int TIME_POS = RIGHT_ALIGN;
-
 char* MENU_HEADERS[] = { NULL };
 
 char* MENU_ITEMS[] = { "Boot Android",

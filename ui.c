@@ -282,7 +282,7 @@ static void draw_text_line(int row, const char* t, int align) {
 	col = gr_fb_width() - length - 1;
 	break;
     }
-    gr_text(col, (row+1)*CHAR_HEIGHT-1, t, 0);
+    gr_text(col, (row+1)*CHAR_HEIGHT-1, t);
 }
 
 //#define MENU_TEXT_COLOR 0, 191, 255, 255
