@@ -75,13 +75,15 @@ void show_cot_options_menu() {
     NULL
   };
   
-  #define COT_OPTIONS_ITEM_ADVANCED	0
-  #define COT_OPTIONS_ITEM_SETTINGS	1
+#define COT_OPTIONS_ITEM_ADVANCED	0
+#define COT_OPTIONS_ITEM_SETTINGS	1
+#define COT_OPTIONS_ITEM_ABOUT		2
   
-  static char* list[3];
+  static char* list[4];
   list[0] = "Advanced Options";
   list[1] = "COT Settings";
-  list[2] = NULL;
+  list[2] = "About COT";
+  list[3] = NULL;
   
   for (;;) {
     int chosen_item = get_menu_selection(headers, list, 0, 0);
@@ -96,8 +98,15 @@ void show_cot_options_menu() {
 	break;
       }
       case COT_OPTIONS_ITEM_SETTINGS:
+      {
 	show_settings_menu();
 	break;
+      }
+      case COT_OPTIONS_ITEM_ABOUT:
+      {
+	show_about_menu();
+	break;
+      }
     }
   }
 }
@@ -389,6 +398,27 @@ void show_settings_menu() {
 	return;
     }
     update_cot_settings();
+  }
+}
+
+void show_about_menu() {
+  static char* headers[] = {
+    "About COT",
+    "",
+    NULL
+  };
+
+  static char* list[4];
+  list[0] = "RECOVERY_VERSION";
+  list[1] = "RECOVERY_BUILD_DATE";
+  list[2] = "RECOVERY_BUILDER_STRING";
+  list[3] = "Copyright (C) 2014 Project Open Cannibal";
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, list, 0, 0);
+    switch (chosen_item) {
+      default:
+	return;
+    }
   }
 }
 
