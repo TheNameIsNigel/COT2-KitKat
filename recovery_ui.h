@@ -106,6 +106,15 @@ extern char* MENU_ITEMS[];
 #define MENU_ICON_XL	2
 #define MENU_ICON_XR	3
 
+#define LEFT_ALIGN 0
+#define CENTER_ALIGN 1
+#define RIGHT_ALIGN 2
+
+extern int BATT_LINE;
+extern int TIME_LINE;
+extern int BATT_POS;
+extern int BATT_LINE;
+
 // Loosely track the depth of the current menu
 extern int ui_root_menu;
 
