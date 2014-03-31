@@ -997,6 +997,169 @@ int can_partition(const char* volume) {
   return 1;
 }
 
+void flash_kernel_default (const char* kernel_path) {
+  static char* headers[] = {  "Flash kernel image",
+    NULL
+  };
+  if (ensure_path_mounted(kernel_path) != 0) {
+    LOGE ("Can't mount %s\n", kernel_path);
+    return;
+  }
+  char tmp[PATH_MAX];
+  sprintf(tmp, "%s/cotrecovery/.kernel_bak/", kernel_path);
+  //without this check, we get 2 errors in log: "directory not found":
+  if (access(tmp, F_OK) != -1) {
+    //folder exists, but could be empty!
+    char* kernel_file = choose_file_menu(tmp, ".img", headers);
+    if (kernel_file == NULL) {
+      //either no valid files found or we selected no files by pressing back menu
+      if (no_files_found == 1) {
+	//0 valid files to select
+	ui_print("No *.img files in %s\n", tmp);
+      }
+      return;
+    }
+    static char* confirm_install = "Confirm flash kernel?";
+    static char confirm[PATH_MAX];
+    sprintf(confirm, "Yes - Flash %s", basename(kernel_file));
+    if (confirm_selection(confirm_install, confirm)) {
+      char tmp[PATH_MAX];
+      sprintf(tmp, "kernel-restore.sh %s %s", kernel_file, kernel_path);
+      __system(tmp);
+    }
+  } else {
+    ui_print("%s not found.\n", tmp);
+    return;
+  }
+}
+
+void show_efs_menu() {
+  static char* headers[] = { "EFS/Boot Backup & Restore",
+    "",
+    NULL
+  };
+  
+  static char* list[] = { "Backup /boot to /sdcard",
+    "Flash /boot from /sdcard",
+    "Backup /efs to /sdcard",
+    "Restore /efs from /sdcard",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+  };
+  
+  char *other_sd = NULL;
+  if (volume_for_path("/emmc") != NULL) {
+    other_sd = "/emmc";
+    list[4] = "Backup /boot to Internal sdcard";
+    list[5] = "Flash /boot from Internal sdcard";
+    list[6] = "Backup /efs to Internal sdcard";
+    list[7] = "Restore /efs from Internal sdcard";
+  } else if (volume_for_path("/external_sd") != NULL) {
+    other_sd = "/external_sd";
+    list[4] = "Backup /boot to External sdcard";
+    list[5] = "Flash /boot from External sdcard";
+    list[6] = "Backup /efs to External sdcard";
+    list[7] = "Restore /efs from External sdcard";
+  }
+  
+  for (;;) {
+    int chosen_item = get_filtered_menu_selection(headers, list, 0, 0, sizeof(list) / sizeof(char*));
+    if (chosen_item == GO_BACK)
+      break;
+    switch (chosen_item)
+    {
+      case 0:
+	if (ensure_path_mounted("/sdcard") != 0) {
+	  ui_print("Can't mount /sdcard\n");
+	  break;
+	}
+	__system("kernel-backup.sh /sdcard");
+	break;
+      
+      case 1:
+	flash_kernel_default("/sdcard");
+	break;
+      
+      case 2:
+	if (ensure_path_mounted("/sdcard") != 0) {
+	  ui_print("Can't mount /sdcard\n");
+	  break;
+	}
+	ensure_path_unmounted("/efs");
+	__system("efs-backup.sh /sdcard");
+	break;
+	
+      case 3:
+	if (ensure_path_mounted("/sdcard") != 0) {
+	  ui_print("Can't mount /sdcard\n");
+	  break;
+	}
+	ensure_path_unmounted("/efs");
+	if (access("/sdcard/cotrecovery/.efsbackup/efs.img", F_OK ) != -1) {
+	  if (confirm_selection("Confirm?", "Yes - Restore EFS")) {
+	    __system("efs-restore.sh /sdcard");
+	  }
+	} else {
+	  LOGE("No efs.img backup found in /sdcard.\n");
+	}
+	break;
+	
+      case 4:
+	{
+	  if (ensure_path_mounted(other_sd) != 0) {
+	    ui_print("Can't mount %s\n", other_sd);
+	    break;
+	  }
+	  char tmp[PATH_MAX];
+	  sprintf(tmp, "kernel-backup.sh %s", other_sd);
+	  __system(tmp);
+	}
+	break;
+	
+      case 5:
+	flash_kernel_default(other_sd);
+	break;
+		
+      case 6:
+      {
+	if (ensure_path_mounted(other_sd) != 0) {
+	  ui_print("Can't mount %s\n", other_sd);
+	  break;
+	}
+	ensure_path_unmounted("/efs");
+	char tmp[PATH_MAX];
+	sprintf(tmp, "efs-backup.sh %s", other_sd);
+	__system(tmp);
+      }
+      break;
+      
+      case 7:
+      {
+	if (ensure_path_mounted(other_sd) != 0) {
+	  ui_print("Can't mount %s\n", other_sd);
+	  break;
+	}
+	ensure_path_unmounted("/efs");
+	char filename[PATH_MAX];
+	sprintf(filename, "%s/cotrecovery/.efsbackup/efs.img", other_sd);
+	if (access(filename, F_OK ) != -1) {
+	  if (confirm_selection("Confirm?", "Yes - Restore EFS")) {
+	    char tmp[PATH_MAX];
+	    sprintf(tmp, "efs-restore.sh %s", other_sd);
+	    __system(tmp);
+	  }
+	} else {
+	  LOGE("No efs.img backup found in %s\n", other_sd);
+	}
+      }
+      break;
+    }
+  }
+}
+
 void write_fstab_root(char *path, FILE *file) {
   Volume *vol = volume_for_path(path);
   if (vol == NULL) {
