@@ -394,6 +394,7 @@ char* choose_file_menu(const char* basedir, const char* fileExtensionOrDirectory
     no_files_found = 1; //we found no valid file to select
     ui_print("No files found.\n");
   } else {
+    no_files_found = 0; //we found a valid file to select
     char** list = (char**)malloc((total + 1) * sizeof(char*));
     list[total] = NULL;
     
