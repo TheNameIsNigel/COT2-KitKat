@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := loki_flash.c loki_patch.c loki_recovery.c
+LOCAL_SRC_FILES := loki_flash.c loki_patch.c loki_unlok.c loki_recovery.c
 LOCAL_MODULE := libloki_recovery
 # to be able to include common.h as it includes <fs_mgr.h>
 # to do: move <fs_mgr.h> outside common.h
