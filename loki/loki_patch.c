@@ -6,6 +6,7 @@
  * Galaxy S4, Galaxy Stellar, and various locked LG devices
  *
  * by Dan Rosenberg (@djrbliss)
+ * modified for use in recovery by Seth Shelnutt, adapted by PhilZ
  *
  */
 
@@ -17,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "loki.h"
+#include "../common.h"
 
 struct target {
 	char *vendor;
@@ -69,27 +71,11 @@ struct target targets[] = {
 		.lg = 0,
 	},
 	{
-		.vendor = "T-Mobile",
-		.device = "LG Optimus F3Q",
-		.build = "D52010c",
-		.check_sigs = 0x88f1079c,
-		.hdr = 0x88f64508,
-		.lg = 1,
-	},
-	{
 		.vendor = "DoCoMo",
 		.device = "LG Optimus G",
 		.build = "L01E20b",
 		.check_sigs = 0x88F10E48,
 		.hdr = 0x88F54418,
-		.lg = 1,
-	},
-	{
-		.vendor = "DoCoMo",
-		.device = "LG Optimus G Pro",
-		.build = "L04E10f",
-		.check_sigs = 0x88f1102c,
-		.hdr = 0x88f54418,
 		.lg = 1,
 	},
 	{
@@ -154,22 +140,6 @@ struct target targets[] = {
 		.build = "LG870ZV4_06",
 		.check_sigs = 0x88f11714,
 		.hdr = 0x88f842ac,
-		.lg = 1,
-	},
-	{
-		.vendor = "US Cellular",
-		.device = "LG Optimus F7",
-		.build = "US78011a",
-		.check_sigs = 0x88f112c8,
-		.hdr = 0x88f84518,
-		.lg = 1,
-	},
-	{
-		.vendor = "Sprint",
-		.device = "LG Optimus F7",
-		.build = "LG870ZV5_02",
-		.check_sigs = 0x88f11710,
-		.hdr = 0x88f842a8,
 		.lg = 1,
 	},
 	{
@@ -285,14 +255,6 @@ struct target targets[] = {
 		.lg = 1,
 	},
 	{
-		.vendor = "KDDI",
-		.device = "LG G Flex",
-		.build = "LGL2310d",
-		.check_sigs = 0xf81261c,
-		.hdr = 0xf8b41c0,
-		.lg = 1,
-	},
-	{
 		.vendor = "International",
 		.device = "LG Optimus F5",
 		.build = "P87510e",
@@ -325,14 +287,6 @@ struct target targets[] = {
 		.lg = 1,
 	},
 	{
-		.vendor = "Verizon",
-		.device = "LG G Pad 8.3",
-		.build = "VK81010c",
-		.check_sigs = 0x88f11080,
-		.hdr = 0x88fd81b8,
-		.lg = 1,
-	},
-	{
 		.vendor = "International",
 		.device = "LG Optimus L9 II",
 		.build = "D60510a",
@@ -349,27 +303,11 @@ struct target targets[] = {
 		.lg = 1,
 	},
 	{
-		.vendor = "Open EU",
-		.device = "LG Optimus F6",
-		.build = "D50510a",
-		.check_sigs = 0x88f10284,
-		.hdr = 0x88f70aa4,
-		.lg = 1,
-	},
-	{
 		.vendor = "KDDI",
 		.device = "LG Isai",
 		.build = "LGL22",
 		.check_sigs = 0xf813458,
 		.hdr = 0xf8d41c0,
-		.lg = 1,
-	},
-	{
-		.vendor = "KDDI",
-		.device = "LG",
-		.build = "LGL21",
-		.check_sigs = 0x88f10218,
-		.hdr = 0x88f50198,
 		.lg = 1,
 	},
 	{
@@ -380,41 +318,38 @@ struct target targets[] = {
 		.hdr = 0x88f54418,
 		.lg = 1,
 	},
-	{
-		.vendor = "International",
-		.device = "LG Vu 3",
-		.build = "F300L",
-		.check_sigs = 0xf813170,
-		.hdr = 0xf8d2440,
-		.lg = 1,
-	},
-	{
-		.vendor = "Sprint",
-		.device = "LG Viper",
-		.build = "LS840ZVK",
-		.check_sigs = 0x4010fe18,
-		.hdr = 0x40194198,
-		.lg = 1,
-	},
-	{
-		.vendor = "International",
-		.device = "LG G Flex",
-		.build = "D95510a",
-		.check_sigs = 0xf812490,
-		.hdr = 0xf8c2440,
-		.lg = 1,
-	},
-	{
-		.vendor = "Sprint",
-		.device = "LG Mach",
-		.build = "LS860ZV7",
-		.check_sigs = 0x88f102b4,
-		.hdr = 0x88f6c194,
-		.lg = 1,
-	},
 };
 
-static unsigned char patch[] = PATCH;
+unsigned char patch[] =
+"\xfe\xb5"
+"\x0d\x4d"
+"\xd5\xf8"
+"\x88\x04"
+"\xab\x68"
+"\x98\x42"
+"\x12\xd0"
+"\xd5\xf8"
+"\x90\x64"
+"\x0a\x4c"
+"\xd5\xf8"
+"\x8c\x74"
+"\x07\xf5\x80\x57"
+"\x0f\xce"
+"\x0f\xc4"
+"\x10\x3f"
+"\xfb\xdc"
+"\xd5\xf8"
+"\x88\x04"
+"\x04\x49"
+"\xd5\xf8"
+"\x8c\x24"
+"\xa8\x60"
+"\x69\x61"
+"\x2a\x61"
+"\x00\x20"
+"\xfe\xbd"
+"\xff\xff\xff\xff"
+"\xee\xee\xee\xee";
 
 int patch_shellcode(unsigned int header, unsigned int ramdisk)
 {
@@ -445,8 +380,9 @@ int patch_shellcode(unsigned int header, unsigned int ramdisk)
 	return -1;
 }
 
-int loki_patch(const char* partition_label, const char* aboot_image, const char* in_image, const char* out_image)
+int loki_patch(char *partition, char *partitionPath)
 {
+
 	int ifd, ofd, aboot_fd, pos, i, recovery, offset, fake_size;
 	unsigned int orig_ramdisk_size, orig_kernel_size, page_kernel_size, page_ramdisk_size, page_size, page_mask;
 	unsigned long target, aboot_base;
@@ -457,56 +393,71 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	struct loki_hdr *loki_hdr;
 	char *buf;
 
-	if (!strcmp(partition_label, "boot")) {
+	ui_print("[+] loki_patch v%s\n", VERSION);
+
+	if (!strcmp(partition, "boot")) {
 		recovery = 0;
-	} else if (!strcmp(partition_label, "recovery")) {
+	} else if (!strcmp(partition, "recovery")) {
 		recovery = 1;
 	} else {
-		printf("[+] First argument must be \"boot\" or \"recovery\".\n");
+		LOGE("[+] First argument must be \"boot\" or \"recovery\".\n");
 		return 1;
 	}
 
 	/* Open input files */
-	aboot_fd = open(aboot_image, O_RDONLY);
+	aboot_fd = open(ABOOT_PARTITION, O_RDONLY);
 	if (aboot_fd < 0) {
-		printf("[-] Failed to open %s for reading.\n", aboot_image);
+		LOGE("[-] Failed to open %s for reading.\n", ABOOT_PARTITION);
 		return 1;
 	}
 
-	ifd = open(in_image, O_RDONLY);
+	ifd = open(partitionPath, O_RDONLY);
 	if (ifd < 0) {
-		printf("[-] Failed to open %s for reading.\n", in_image);
+		LOGE("[-] Failed to open %s for reading.\n", partitionPath);
 		return 1;
 	}
 
-	ofd = open(out_image, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+	ofd = open(LOKI_IMAGE, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (ofd < 0) {
-		printf("[-] Failed to open %s for writing.\n", out_image);
+		LOGE("[-] Failed to open %s for writing.\n", LOKI_IMAGE);
 		return 1;
 	}
 
 	/* Find the signature checking function via pattern matching */
 	if (fstat(aboot_fd, &st)) {
-		printf("[-] fstat() failed.\n");
+		LOGE("[-] fstat() failed.\n");
 		return 1;
 	}
 
+	/* Verify the to-be-patched address matches the known code pattern */
 	aboot = mmap(0, (st.st_size + 0xfff) & ~0xfff, PROT_READ, MAP_PRIVATE, aboot_fd, 0);
 	if (aboot == MAP_FAILED) {
-		printf("[-] Failed to mmap aboot.\n");
+		LOGE("[-] Failed to mmap aboot.\n");
 		return 1;
 	}
 
 	target = 0;
-	aboot_base = *(unsigned int *)(aboot + 12) - 0x28;
 
 	for (ptr = aboot; ptr < aboot + st.st_size - 0x1000; ptr++) {
 		if (!memcmp(ptr, PATTERN1, 8) ||
 			!memcmp(ptr, PATTERN2, 8) ||
-			!memcmp(ptr, PATTERN3, 8) ||
-			!memcmp(ptr, PATTERN4, 8) ||
-			!memcmp(ptr, PATTERN5, 8)) {
+			!memcmp(ptr, PATTERN3, 8)) {
 
+			aboot_base = ABOOT_BASE_SAMSUNG;
+			target = (unsigned long)ptr - (unsigned long)aboot + aboot_base;
+			break;
+		}
+
+		if (!memcmp(ptr, PATTERN4, 8)) {
+
+			aboot_base = ABOOT_BASE_LG;
+			target = (unsigned long)ptr - (unsigned long)aboot + aboot_base;
+			break;
+		}
+
+		if (!memcmp(ptr, PATTERN5, 8)) {
+
+			aboot_base = ABOOT_BASE_G2;
 			target = (unsigned long)ptr - (unsigned long)aboot + aboot_base;
 			break;
 		}
@@ -520,6 +471,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 		for (ptr = aboot; ptr < aboot + st.st_size - 0x1000; ptr++) {
 			if (!memcmp(ptr, PATTERN6, 8)) {
 
+				aboot_base = ABOOT_BASE_LG;
 				target = (unsigned long)ptr - (unsigned long)aboot + aboot_base;
 				break;
 			}
@@ -527,7 +479,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	}
 
 	if (!target) {
-		printf("[-] Failed to find function to patch.\n");
+		LOGE("[-] Failed to find function to patch.\n");
 		return 1;
 	}
 
@@ -541,21 +493,21 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	}
 
 	if (!tgt) {
-		printf("[-] Unsupported aboot image.\n");
+		LOGE("[-] Unsupported aboot image.\n");
 		return 1;
 	}
 
-	printf("[+] Detected target %s %s build %s\n", tgt->vendor, tgt->device, tgt->build);
+	ui_print("[+] Detected target %s %s build %s\n", tgt->vendor, tgt->device, tgt->build);
 
 	/* Map the original boot/recovery image */
 	if (fstat(ifd, &st)) {
-		printf("[-] fstat() failed.\n");
+		LOGE("[-] fstat() failed.\n");
 		return 1;
 	}
 
 	orig = mmap(0, (st.st_size + 0x2000 + 0xfff) & ~0xfff, PROT_READ|PROT_WRITE, MAP_PRIVATE, ifd, 0);
 	if (orig == MAP_FAILED) {
-		printf("[-] Failed to mmap input file.\n");
+		LOGE("[-] Failed to mmap input file.\n");
 		return 1;
 	}
 
@@ -563,15 +515,15 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	loki_hdr = orig + 0x400;
 
 	if (!memcmp(loki_hdr->magic, "LOKI", 4)) {
-		printf("[-] Input file is already a Loki image.\n");
+		ui_print("[-] Input file is already a Loki image.\n");
 
 		/* Copy the entire file to the output transparently */
 		if (write(ofd, orig, st.st_size) != st.st_size) {
-			printf("[-] Failed to copy Loki image.\n");
+			LOGE("[-] Failed to copy Loki image.\n");
 			return 1;
 		}
 
-		printf("[+] Copied Loki image to %s.\n", out_image);
+		ui_print("[+] Copied Loki image to %s.\n", LOKI_IMAGE);
 
 		return 0;
 	}
@@ -587,8 +539,8 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	orig_kernel_size = hdr->kernel_size;
 	orig_ramdisk_size = hdr->ramdisk_size;
 
-	printf("[+] Original kernel address: %.08x\n", hdr->kernel_addr);
-	printf("[+] Original ramdisk address: %.08x\n", hdr->ramdisk_addr);
+	ui_print("[+] Original kernel address: %.08x\n", hdr->kernel_addr);
+	ui_print("[+] Original ramdisk address: %.08x\n", hdr->ramdisk_addr);
 
 	/* Store the original values in unused fields of the header */
 	loki_hdr->orig_kernel_size = orig_kernel_size;
@@ -596,7 +548,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	loki_hdr->ramdisk_addr = hdr->kernel_addr + ((hdr->kernel_size + page_mask) & ~page_mask);
 
 	if (patch_shellcode(tgt->hdr, hdr->ramdisk_addr) < 0) {
-		printf("[-] Failed to patch shellcode.\n");
+		LOGE("[-] Failed to patch shellcode.\n");
 		return 1;
 	}
 
@@ -619,7 +571,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 
 	/* Write the image header */
 	if (write(ofd, orig, page_size) != page_size) {
-		printf("[-] Failed to write header to output file.\n");
+		LOGE("[-] Failed to write header to output file.\n");
 		return 1;
 	}
 
@@ -627,7 +579,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 
 	/* Write the kernel */
 	if (write(ofd, orig + page_size, page_kernel_size) != page_kernel_size) {
-		printf("[-] Failed to write kernel to output file.\n");
+		LOGE("[-] Failed to write kernel to output file.\n");
 		return 1;
 	}
 
@@ -635,14 +587,14 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 
 	/* Write the ramdisk */
 	if (write(ofd, orig + page_size + page_kernel_size, page_ramdisk_size) != page_ramdisk_size) {
-		printf("[-] Failed to write ramdisk to output file.\n");
+		LOGE("[-] Failed to write ramdisk to output file.\n");
 		return 1;
 	}
 
 	/* Write fake_size bytes of original code to the output */
 	buf = malloc(fake_size);
 	if (!buf) {
-		printf("[-] Out of memory.\n");
+		LOGE("[-] Out of memory.\n");
 		return 1;
 	}
 
@@ -650,7 +602,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	read(aboot_fd, buf, fake_size);
 
 	if (write(ofd, buf, fake_size) != fake_size) {
-		printf("[-] Failed to write original aboot code to output file.\n");
+		LOGE("[-] Failed to write original aboot code to output file.\n");
 		return 1;
 	}
 
@@ -660,10 +612,10 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	/* Write the device tree if needed */
 	if (hdr->dt_size) {
 
-		printf("[+] Writing device tree.\n");
+		ui_print("[+] Writing device tree.\n");
 
 		if (write(ofd, orig + page_size + page_kernel_size + page_ramdisk_size, hdr->dt_size) != hdr->dt_size) {
-			printf("[-] Failed to write device tree to output file.\n");
+			LOGE("[-] Failed to write device tree to output file.\n");
 			return 1;
 		}
 	}
@@ -672,7 +624,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 
 	/* Write the patch */
 	if (write(ofd, patch, sizeof(patch)) != sizeof(patch)) {
-		printf("[-] Failed to write patch to output file.\n");
+		LOGE("[-] Failed to write patch to output file.\n");
 		return 1;
 	}
 
@@ -680,7 +632,7 @@ int loki_patch(const char* partition_label, const char* aboot_image, const char*
 	close(ofd);
 	close(aboot_fd);
 
-	printf("[+] Output file written to %s\n", out_image);
+	ui_print("[+] Output file written to %s\n", LOKI_IMAGE);
 
 	return 0;
 }

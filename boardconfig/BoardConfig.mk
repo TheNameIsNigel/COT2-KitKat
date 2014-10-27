@@ -11,12 +11,6 @@ ifneq ($(filter $(TARGET_PRODUCT),cm_e970 cm_e973 cm_ls970 cm_e975),)
     DEVICE_RESOLUTION := 1280x768
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
 
-#Motorola Droid Ultra (XT1080), Motorola X (Verizon)
-ifneq ($(filter $(TARGET_PRODUCT),cm_e970 cm_e973 cm_ls970 cm_e975),)
-    TARGET_COMMON_NAME := Moto_Ultra
-    DEVICE_RESOLUTION := 1280x720
-    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
-
 #LGE Nexus 4 - mako
 else ifeq ($(TARGET_PRODUCT), cm_mako)
     TARGET_COMMON_NAME := Nexus_4

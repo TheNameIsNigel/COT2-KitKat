@@ -44,7 +44,7 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 RECOVERY_FSTAB_VERSION := 2
 
-RECOVERY_VERSION := Cannibal Open Touch v2.2.0
+RECOVERY_VERSION := Cannibal Open Touch v2.99.1
 RECOVERY_BUILD_DATE := $(shell date)
 RECOVERY_BUILDER := Built by $(shell uname -n)
 
