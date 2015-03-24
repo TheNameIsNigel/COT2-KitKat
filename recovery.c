@@ -74,11 +74,11 @@ static const struct option OPTIONS[] = {
   { NULL, 0, NULL, 0 },
 };
 
-#define LAST_LOG_FILE "/cache/recovery/last_log"
+#define LAST_LOG_FILE "/sdcard/0/cot/logs/last_log.poc"
 static const char *CACHE_LOG_DIR = "/cache/recovery";
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
-static const char *LOG_FILE = "/cache/recovery/log";
+static const char *LOG_FILE = "/sdcard/0/cot/logs/recovery.poc";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
 static const char *CACHE_ROOT = "/cache";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
@@ -899,7 +899,7 @@ int run_script_file(void) {
 	    remove_nl = 0;
 	  strncpy(value2, tok, line_len - remove_nl);
 	  ui_print("Backup folder set to '%s'\n", value2);
-	  sprintf(backup_path, "/sdcard/cotrecovery/backup/%s", value2);
+	  sprintf(backup_path, "/sdcard/0/cot/backup/%s", value2);
 	} else {
 	  nandroid_generate_timestamp_path(backup_path);
 	}
